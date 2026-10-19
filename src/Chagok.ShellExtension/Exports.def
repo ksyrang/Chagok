@@ -1,0 +1,4 @@
+LIBRARY Chagok.ShellExtension
+EXPORTS
+ DllGetClassObject
+ DllCanUnloadNow

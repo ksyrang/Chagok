@@ -1,0 +1,124 @@
+<Window x:Class="FileOrganizer.Windows.MainWindow"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="차곡 — 파일 정리" Width="1120" Height="790" MinWidth="900" MinHeight="640"
+ WindowStartupLocation="CenterScreen" Style="{StaticResource {x:Type Window}}">
+ <Window.Resources>
+  <Geometry x:Key="SettingsGearIcon">M 19.021,9.092 L 21.823,10.126 L 21.823,13.874 L 19.021,14.908 L 19.021,14.908 L 20.271,17.621 L 17.621,20.271 L 14.908,19.021 L 14.908,19.021 L 13.874,21.823 L 10.126,21.823 L 9.092,19.021 L 9.092,19.021 L 6.379,20.271 L 3.729,17.621 L 4.979,14.908 L 4.979,14.908 L 2.177,13.874 L 2.177,10.126 L 4.979,9.092 L 4.979,9.092 L 3.729,6.379 L 6.379,3.729 L 9.092,4.979 L 9.092,4.979 L 10.126,2.177 L 13.874,2.177 L 14.908,4.979 L 14.908,4.979 L 17.621,3.729 L 20.271,6.379 L 19.021,9.092 Z M 15,12 A 3,3 0 1 1 9,12 A 3,3 0 1 1 15,12</Geometry>
+  <Geometry x:Key="ThemeSystemIcon">M 3,4 L 21,4 L 21,17 L 3,17 Z M 8,21 L 16,21 M 12,17 L 12,21</Geometry>
+  <Geometry x:Key="ThemeLightIcon">M 16,12 A 4,4 0 1 1 8,12 A 4,4 0 1 1 16,12 M 12,2 L 12,4 M 12,20 L 12,22 M 2,12 L 4,12 M 20,12 L 22,12 M 5,5 L 6.5,6.5 M 17.5,17.5 L 19,19 M 5,19 L 6.5,17.5 M 17.5,6.5 L 19,5</Geometry>
+  <Geometry x:Key="ThemeDarkIcon">M 20.5,14 A 9,9 0 1 1 10,3.5 A 7,7 0 0 0 20.5,14 Z</Geometry>
+  <Style x:Key="ThemeOption" TargetType="RadioButton">
+   <Setter Property="KeyboardNavigation.AcceptsReturn" Value="True"/>
+   <Setter Property="OverridesDefaultStyle" Value="True"/><Setter Property="Width" Value="40"/><Setter Property="Height" Value="40"/><Setter Property="Padding" Value="8"/><Setter Property="Cursor" Value="Hand"/><Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="RadioButton">
+    <Border x:Name="OptionFrame" Background="Transparent" BorderBrush="Transparent" BorderThickness="2" CornerRadius="5" Padding="{TemplateBinding Padding}"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="OptionFrame" Property="Background" Value="{DynamicResource SoftBrush}"/></Trigger>
+     <Trigger Property="IsChecked" Value="True"><Setter TargetName="OptionFrame" Property="Background" Value="{DynamicResource SoftBrush}"/><Setter TargetName="OptionFrame" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/></Trigger>
+     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="OptionFrame" Property="BorderBrush" Value="{DynamicResource TextBrush}"/></Trigger>
+     <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.55"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+ </Window.Resources>
+ <Grid><Grid.RowDefinitions><RowDefinition Height="60"/><RowDefinition Height="*"/><RowDefinition Height="38"/></Grid.RowDefinitions>
+  <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="22,0"><DockPanel LastChildFill="True">
+   <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+    <Button x:Name="ThemeButton" Width="40" Height="40" Padding="8" Click="OpenThemeOptions" AutomationProperties.Name="테마 선택">
+     <Viewbox Width="20" Height="20" IsHitTestVisible="False"><Canvas Width="24" Height="24"><Path x:Name="ThemeSymbol" Stroke="{DynamicResource TextBrush}" StrokeThickness="1.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Canvas></Viewbox>
+    </Button>
+    <Popup x:Name="ThemePopup" Placement="Bottom" PlacementTarget="{Binding ElementName=ThemeButton}" VerticalOffset="6" StaysOpen="False" AllowsTransparency="True" Opened="ThemePopupOpened">
+     <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="7" Padding="6" PreviewKeyDown="ThemeOptionsKeyDown">
+      <StackPanel Orientation="Horizontal" KeyboardNavigation.TabNavigation="Cycle">
+       <RadioButton x:Name="ThemeSystemOption" Style="{StaticResource ThemeOption}" GroupName="QuickTheme" Tag="System" ToolTip="시스템" AutomationProperties.Name="시스템" Click="ThemeChanged" Margin="3,0"><Viewbox Width="20" Height="20" IsHitTestVisible="False"><Canvas Width="24" Height="24"><Path Data="{StaticResource ThemeSystemIcon}" Stroke="{DynamicResource TextBrush}" StrokeThickness="1.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Canvas></Viewbox></RadioButton>
+       <RadioButton x:Name="ThemeLightOption" Style="{StaticResource ThemeOption}" GroupName="QuickTheme" Tag="Light" ToolTip="라이트" AutomationProperties.Name="라이트" Click="ThemeChanged" Margin="3,0"><Viewbox Width="20" Height="20" IsHitTestVisible="False"><Canvas Width="24" Height="24"><Path Data="{StaticResource ThemeLightIcon}" Stroke="{DynamicResource TextBrush}" StrokeThickness="1.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Canvas></Viewbox></RadioButton>
+       <RadioButton x:Name="ThemeDarkOption" Style="{StaticResource ThemeOption}" GroupName="QuickTheme" Tag="Dark" ToolTip="다크" AutomationProperties.Name="다크" Click="ThemeChanged" Margin="3,0"><Viewbox Width="20" Height="20" IsHitTestVisible="False"><Canvas Width="24" Height="24"><Path Data="{StaticResource ThemeDarkIcon}" Stroke="{DynamicResource TextBrush}" StrokeThickness="1.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Canvas></Viewbox></RadioButton>
+      </StackPanel>
+     </Border>
+    </Popup>
+    <Button x:Name="SettingsButton" Width="40" Height="40" Padding="8" Click="OpenSettings" Margin="8,0,0,0" ToolTip="설정" AutomationProperties.Name="설정">
+     <Viewbox Width="20" Height="20" IsHitTestVisible="False"><Canvas Width="24" Height="24"><Path Data="{StaticResource SettingsGearIcon}" Stroke="{DynamicResource TextBrush}" StrokeThickness="1.7" StrokeLineJoin="Round"/></Canvas></Viewbox>
+    </Button>
+   </StackPanel>
+   <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><Image Source="Assets/chagok.png" Width="40" Height="40" Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality" AutomationProperties.Name="차곡 로고"/><StackPanel VerticalAlignment="Center"><TextBlock Text="차곡" FontSize="18" FontWeight="SemiBold"/><TextBlock Text="by ksyrang" FontSize="10" Foreground="{DynamicResource SubBrush}"/></StackPanel><TextBlock Text="규칙으로 파일을 차곡차곡" Margin="18,0,14,0" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource SubBrush}" TextTrimming="CharacterEllipsis"/></StackPanel>
+  </DockPanel></Border>
+  <Grid Grid.Row="1"><Grid.ColumnDefinitions><ColumnDefinition Width="218"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+   <Border Background="{DynamicResource SideBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0" Padding="12,18,12,12"><DockPanel>
+    <DockPanel DockPanel.Dock="Top" Margin="8,0,0,14"><Button x:Name="AddFolderButton" Content="＋" DockPanel.Dock="Right" Padding="8,2" MinHeight="30" Click="AddFolder" AutomationProperties.Name="검사 폴더 추가"/><TextBlock Text="검사할 폴더" Foreground="{DynamicResource SubBrush}" VerticalAlignment="Center" FontSize="12"/></DockPanel>
+    <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0"><Button x:Name="HistoryNavButton" Content="실행 기록" Click="ShowHistory" Margin="0,0,0,8"/><TextBlock x:Name="CloseHint" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource SubBrush}" Margin="8,0"/></StackPanel>
+    <ListBox x:Name="FolderList" SelectionChanged="FolderChanged"><ListBox.ItemTemplate><DataTemplate><DockPanel>
+     <Button DockPanel.Dock="Right" Tag="{Binding}" Click="DuplicateFolder" ToolTip="폴더와 규칙 복제" AutomationProperties.Name="{Binding Name, StringFormat={}{0} 폴더와 규칙 복제}" Width="30" MinHeight="30" Padding="5" Margin="6,0,0,0" VerticalAlignment="Top">
+      <Viewbox Width="16" Height="16"><Canvas Width="24" Height="24"><Path Data="M 8,8 L 21,8 L 21,21 L 8,21 Z M 4,16 L 3,16 L 3,3 L 16,3 L 16,4" Stroke="{DynamicResource TextBrush}" StrokeThickness="1.7" StrokeLineJoin="Round"/></Canvas></Viewbox>
+     </Button>
+     <StackPanel><TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/><TextBlock Text="{Binding Path}" FontSize="11" Foreground="{DynamicResource SubBrush}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}"/></StackPanel>
+    </DockPanel></DataTemplate></ListBox.ItemTemplate></ListBox>
+   </DockPanel></Border>
+   <Grid Grid.Column="1" Margin="28,24"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <Border x:Name="PendingBanner" Visibility="Collapsed" Background="{DynamicResource SoftBrush}" CornerRadius="5" Padding="12" Margin="0,0,0,16"><DockPanel><StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><Button Content="목록 확인" Click="OpenPending" Margin="8,0"/><Button Content="무시" Click="DismissPending"/></StackPanel><TextBlock x:Name="PendingText" VerticalAlignment="Center" TextWrapping="Wrap"/></DockPanel></Border>
+    <Grid Grid.Row="1">
+     <Grid x:Name="RulesView"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+      <DockPanel Margin="0,0,0,22"><StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top"><Button x:Name="FolderOptionsButton" Width="40" Height="40" Padding="6" Click="EditFolder" Margin="8,0,0,0" ToolTip="폴더 설정" AutomationProperties.Name="폴더 설정">
+       <Viewbox Width="26" Height="24" IsHitTestVisible="False"><Canvas Width="28" Height="24">
+        <Path Data="M 2,8 L 2,20 Q 2,22 4,22 L 23,22 Q 25,22 25,20 L 25,10 Q 25,8 23,8 L 12,8 L 9,5 L 4,5 Q 2,5 2,8 Z" Stroke="{DynamicResource TextBrush}" StrokeThickness="1.7" StrokeLineJoin="Round"/>
+        <Ellipse Canvas.Left="13" Canvas.Top="0" Width="15" Height="15" Fill="{DynamicResource SurfaceBrush}"/>
+        <Viewbox Canvas.Left="13" Canvas.Top="0" Width="15" Height="15"><Canvas Width="24" Height="24"><Path Data="{StaticResource SettingsGearIcon}" Stroke="{DynamicResource TextBrush}" StrokeThickness="2" StrokeLineJoin="Round"/></Canvas></Viewbox>
+       </Canvas></Viewbox>
+      </Button></StackPanel><StackPanel><TextBlock x:Name="FolderTitle" Text="시작하기" FontSize="25" FontWeight="SemiBold"/><TextBox x:Name="FolderPathText" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" MinHeight="24" Foreground="{DynamicResource SubBrush}" FontSize="12"/><TextBlock x:Name="FolderTriggerText" FontSize="12" Foreground="{DynamicResource AccentBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel></DockPanel>
+      <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,20"><Button x:Name="AddRuleButton" Content="＋ 규칙 추가" Click="AddRule" Margin="0,0,8,0"/><Button x:Name="PreviewButton" Content="폴더 전체 검사 및 실행" Style="{StaticResource PrimaryButton}" Click="PreviewFolder" ToolTip="켜진 규칙 전체로 검사한 뒤 대상 목록에서 실행합니다."/></StackPanel>
+      <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel><TextBlock x:Name="RuleCount" Foreground="{DynamicResource SubBrush}" FontSize="12" Margin="0,0,0,10"/><ItemsControl x:Name="RuleList"><ItemsControl.ItemTemplate><DataTemplate>
+       <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="7" Padding="18" Margin="0,0,0,12"><Grid>
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <Grid Margin="0,0,0,10"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+         <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="16" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,16,0"/>
+         <ToggleButton x:Name="RuleEnabledSwitch" Grid.Column="1" Style="{StaticResource RuleSwitch}" IsChecked="{Binding Enabled, Mode=OneWay}" Tag="{Binding}" Click="ToggleRule" AutomationProperties.Name="{Binding Name, StringFormat={}{0} 규칙 사용 여부}" ToolTip="이 규칙의 사용 여부를 바꿉니다. 파일 이동은 시작하지 않습니다."/>
+        </Grid>
+        <StackPanel Grid.Row="1"><TextBlock Text="{Binding ConditionText}" Foreground="{DynamicResource SubBrush}" TextWrapping="Wrap"/><TextBlock Text="{Binding DestinationText}" Foreground="{DynamicResource SubBrush}" TextWrapping="Wrap" Margin="0,5,0,0"/><TextBlock Text="{Binding TriggerText}" Foreground="{DynamicResource AccentBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,10,0,0"/></StackPanel>
+        <Border Grid.Row="2" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Margin="0,14,0,0" Padding="0,12,0,0"><StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+         <Button Content="편집" Tag="{Binding}" Click="EditRule" Margin="0,0,8,0"/>
+         <Button Content="검사 및 실행" Style="{StaticResource PrimaryButton}" Tag="{Binding}" IsEnabled="{Binding Enabled}" Click="PreviewRule" ToolTip="이 규칙 하나만 검사하고, 대상 목록을 확인한 뒤 실행합니다."/>
+        </StackPanel></Border>
+       </Grid></Border>
+      </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+       <TextBlock x:Name="EmptyRulesText" Text="왼쪽의 ＋ 버튼으로 검사할 폴더를 추가하세요." TextWrapping="Wrap" Foreground="{DynamicResource SubBrush}" Margin="0,20"/>
+       <TextBlock Text="켜진 규칙을 위에서부터 적용합니다. 한 파일은 처음 일치한 규칙 하나로 처리합니다." TextWrapping="Wrap" Foreground="{DynamicResource SubBrush}" FontSize="12" Margin="0,12"/>
+      </StackPanel></ScrollViewer>
+     </Grid>
+     <Grid x:Name="PreviewView" Visibility="Collapsed"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <StackPanel>
+       <Button x:Name="PreviewBackButton" Content="← 규칙 목록" HorizontalAlignment="Left" Click="BackToRules" MinHeight="30" Padding="8,4" Margin="0,0,0,8"/>
+       <TextBlock Text="검사 및 실행" FontSize="22" FontWeight="SemiBold"/>
+       <TextBlock x:Name="PreviewSubtitle" Foreground="{DynamicResource SubBrush}" FontSize="12" Margin="0,4,0,6" TextWrapping="Wrap"/>
+       <TextBlock x:Name="PreviewHint" Text="검사 결과입니다. 실행할 항목을 선택한 뒤 아래 실행 버튼을 누르세요." Foreground="{DynamicResource SubBrush}" FontSize="12" Margin="0,0,0,10" TextWrapping="Wrap"/>
+       <Border x:Name="RunCard" Visibility="Collapsed" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1" CornerRadius="7" Padding="12" Margin="0,0,0,12">
+        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+         <Path x:Name="RunSymbol" Data="M 2,9 L 17,9 M 11,3 L 17,9 L 11,15" Stroke="{DynamicResource AccentBrush}" StrokeThickness="2" Width="20" Height="20" Stretch="Uniform" VerticalAlignment="Top" Margin="0,2,8,0"/>
+         <StackPanel Grid.Column="1">
+          <DockPanel><Button x:Name="ResultHistoryButton" Content="기록 보기" Click="ShowHistory" Visibility="Collapsed" DockPanel.Dock="Right" Padding="8,3" MinHeight="26" FontSize="12" Margin="10,0,0,0"/><TextBlock x:Name="RunTimeText" DockPanel.Dock="Right" FontSize="12" Foreground="{DynamicResource SubBrush}" Margin="10,2,0,0"/><TextBlock x:Name="RunTitle" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/></DockPanel>
+          <TextBlock x:Name="RunCountsText" FontSize="12" Foreground="{DynamicResource SubBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+          <ProgressBar x:Name="OverallProgress" Minimum="0" Maximum="100" Height="6" Margin="0,8,0,0" Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource SideBrush}" AutomationProperties.Name="전체 파일 처리 진행률"/>
+          <TextBlock x:Name="RunCurrentText" FontSize="12" Foreground="{DynamicResource SubBrush}" TextTrimming="CharacterEllipsis" Margin="0,6,0,0"/>
+          <ProgressBar x:Name="CurrentFileProgress" Minimum="0" Maximum="100" Height="3" Margin="0,4,0,0" Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource SideBrush}" Visibility="Collapsed" AutomationProperties.Name="현재 파일 복사 진행률"/>
+         </StackPanel>
+        </Grid>
+       </Border>
+      </StackPanel>
+      <StackPanel Grid.Row="1"><TextBlock x:Name="ScanWarnings" Foreground="{DynamicResource SubBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,10"/><StackPanel Orientation="Horizontal" Margin="0,0,0,10"><Button x:Name="SelectAllButton" Content="전체 결과의 실행 가능 항목 선택" Click="SelectAll" Margin="0,0,8,0"/><Button x:Name="SelectNoneButton" Content="전체 선택 해제" Click="SelectNone"/></StackPanel><DockPanel Margin="0,0,0,10"><StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><Button x:Name="PreviousPageButton" Content="이전" Click="PreviousPage" Margin="0,0,8,0"/><Button x:Name="NextPageButton" Content="다음" Click="NextPage"/></StackPanel><TextBlock x:Name="PageText" VerticalAlignment="Center" Foreground="{DynamicResource SubBrush}" FontSize="12" TextWrapping="Wrap"/></DockPanel></StackPanel>
+      <DataGrid x:Name="PreviewGrid" EnableRowVirtualization="True" EnableColumnVirtualization="True" Grid.Row="2" ItemsSource="{Binding}" SelectionMode="Extended"><DataGrid.Columns>
+       <DataGridTemplateColumn Header="선택" Width="52"><DataGridTemplateColumn.CellTemplate><DataTemplate><CheckBox IsChecked="{Binding Selected, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanExecute}" AutomationProperties.Name="실행 대상 선택"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+       <DataGridTextColumn Header="파일 / 규칙" Binding="{Binding FileDisplay}" Width="1.1*" IsReadOnly="True"/>
+       <DataGridTextColumn Header="예정 작업" Binding="{Binding ActionText}" Width="105" IsReadOnly="True"/>
+       <DataGridTextColumn Header="이동 위치 / 판단 이유" Binding="{Binding TargetDisplay}" Width="1.5*" IsReadOnly="True"/>
+       <DataGridTemplateColumn Header="처리 결과" Width="160" IsReadOnly="True"><DataGridTemplateColumn.CellTemplate><DataTemplate>
+        <StackPanel ToolTip="{Binding ResultMessage}" Margin="0,2"><TextBlock Text="{Binding ResultText}" FontWeight="SemiBold"/><TextBlock Text="{Binding ResultMessage}" Foreground="{DynamicResource SubBrush}" FontSize="11" TextTrimming="CharacterEllipsis"/></StackPanel>
+       </DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+      </DataGrid.Columns></DataGrid>
+      <DockPanel Grid.Row="3" Margin="0,16,0,0"><Button x:Name="ExecuteButton" Content="선택 항목 실행" DockPanel.Dock="Right" Style="{StaticResource PrimaryButton}" Click="ExecuteSelected"/><TextBlock x:Name="SelectionText" VerticalAlignment="Center" Foreground="{DynamicResource SubBrush}" TextWrapping="Wrap" Margin="0,0,12,0"/></DockPanel>
+     </Grid>
+     <Grid x:Name="HistoryView" Visibility="Collapsed"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><StackPanel Margin="0,0,0,18"><Button Content="← 규칙 목록" Click="BackToRules" HorizontalAlignment="Left" Margin="0,0,0,18"/><TextBlock Text="실행 기록" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="최근 500개 · 항목을 두 번 누르면 상세 내용을 볼 수 있습니다." Foreground="{DynamicResource SubBrush}" FontSize="12" Margin="0,6,0,0"/></StackPanel><DataGrid x:Name="HistoryGrid" Grid.Row="1" IsReadOnly="True" MouseDoubleClick="HistoryDetails"><DataGrid.Columns><DataGridTextColumn Header="시간" Binding="{Binding Time}" Width="135"/><DataGridTextColumn Header="파일 / 규칙" Binding="{Binding File}" Width="*"/><DataGridTextColumn Header="결과" Binding="{Binding Status}" Width="95"/></DataGrid.Columns></DataGrid></Grid>
+    </Grid>
+   </Grid>
+  </Grid>
+  <Border Grid.Row="2" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0" Padding="18,0"><DockPanel><Button x:Name="CancelButton" Content="취소" Visibility="Collapsed" DockPanel.Dock="Right" Padding="12,2" MinHeight="26" Click="CancelWork"/><TextBlock x:Name="StatusText" Text="폴더와 규칙을 추가한 뒤 미리보기를 실행하세요." VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource SubBrush}" TextTrimming="CharacterEllipsis"/></DockPanel></Border>
+ </Grid>
+</Window>
