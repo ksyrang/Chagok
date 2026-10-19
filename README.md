@@ -1,5 +1,9 @@
 # 차곡 · CHAGOK — 0.5.6 테스트 빌드
 
+**[차곡 0.5.6 다운로드 · Windows x64](https://github.com/ksyrang/Chagok/releases/tag/v0.5.6)**
+
+릴리스 페이지에서 `Chagok-v0.5.6-win-x64.zip`을 내려받아 압축을 푼 뒤 `Chagok-v0.5.6.exe`를 실행하세요. 현재는 서명하지 않은 테스트 빌드입니다.
+
 ksyrang이 개발하는 차곡은 폴더별 규칙으로 파일을 정리하는 Windows 도구입니다. 폴더·규칙 중심의 구성은 [Forel](https://github.com/lab421/forel)에서 영감을 받았습니다. Forel 또는 lab421의 공식·제휴 프로젝트는 아닙니다.
 
 [Forel 참조 범위와 출처 점검 기록](docs/forel-provenance-review.md)
