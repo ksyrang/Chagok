@@ -247,3 +247,9 @@ FILEORGANIZER_BUILD_CACHE=/private/tmp/fileorganizer-build-cache bash scripts/do
 ## 네이티브 탐색기 확장 빌드
 
 `src/Chagok.ShellExtension`의 C++ 구현과 `scripts/build-shell-extension.sh`를 사용합니다. 검증한 도구는 Zig 0.13.0입니다. `CHAGOK_ZIG=/path/to/zig bash scripts/build-shell-extension.sh`로 x64 DLL을 먼저 만들고, 그 뒤 Windows 앱을 게시합니다. DLL과 manifest·이미지·라이선스 고지는 EXE 안에 포함됩니다. Native DLL 변경 중 Windows 앱을 동시에 빌드하지 않습니다.
+
+## 라이선스
+
+차곡의 자체 작성 코드와 문서는 [MIT 라이선스](LICENSE)로 제공합니다. 저작권·라이선스 고지를 유지하면 사용, 수정, 재배포와 유료 배포를 허용합니다. 수정한 소스를 공개할 의무는 없습니다. 프로그램은 보증 없이 제공하며, 자세한 조건은 라이선스 원문을 따릅니다.
+
+외부 구성요소는 각각의 라이선스를 따릅니다. 기존 고지는 유지하며, 네이티브 탐색기 확장의 고지는 [ShellExtension-LICENSES.txt](src/FileOrganizer.Windows/Assets/Shell/ShellExtension-LICENSES.txt)에서 확인할 수 있습니다.
