@@ -166,7 +166,7 @@ internal static class TuiAnalysis
         }
         finally { store?.Dispose(); }
     }
-    private static void Details(string text, CancellationToken token)
+    internal static void Details(string text, CancellationToken token)
     {
         var offset = 0;
         while (true)

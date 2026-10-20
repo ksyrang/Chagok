@@ -48,7 +48,8 @@ def save_rule():
  send('\x1b[F','규칙 ID')
  return send('y','규칙 저장 완료')
 try:
- first=read_until('검사 폴더')
+ first=read_until('정리 방식 선택')
+ send('1','검사 폴더')
  assert '⡜⠛⡄⢸⠀⢸' in first and '████' not in first
  send('\x1b[B','선택 규칙  old-00')
  before=(data/'settings.json').read_bytes()

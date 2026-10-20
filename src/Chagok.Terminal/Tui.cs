@@ -11,7 +11,7 @@ internal sealed class Tui(TerminalSession session, IRecycleBin recycle, Cancella
         {
             Console.CursorVisible = false;
             var folderIndex = 0; var ruleIndex = 0; var pane = 0;
-            var status = "대기 중";
+            var status = "대기 중"; var starting = true;
             void SelectFolder(Guid? id)
             {
                 if (id is null) return;
@@ -34,6 +34,34 @@ internal sealed class Tui(TerminalSession session, IRecycleBin recycle, Cancella
                 ruleIndex = Math.Clamp(ruleIndex, 0, Math.Max(0, (folder?.Rules.Count ?? 0) - 1));
                 var rule = folder?.Rules.ElementAtOrDefault(ruleIndex);
                 if (!ViewportReady(token)) return;
+                if (starting)
+                {
+                    Dashboard.Render(StartScreen.Build(TerminalText.Width, folder), brand: true);
+                    var startInput = TerminalText.Key(token); var startKey = startInput.Key;
+                    try
+                    {
+                        if (TuiHelp.IsHelp(startInput)) { TuiHelp.Show(token); continue; }
+                        if (startKey is ConsoleKey.Q or ConsoleKey.Escape) return;
+                        if (startKey is ConsoleKey.UpArrow or ConsoleKey.DownArrow)
+                        { folderIndex = Math.Clamp(folderIndex + (startKey == ConsoleKey.UpArrow ? -1 : 1), 0, Math.Max(0, folders.Count - 1)); ruleIndex = 0; continue; }
+                        if (startKey == ConsoleKey.F) { SelectFolder(EditFolder(null, false)); continue; }
+                        if (startKey == ConsoleKey.H) { History(); continue; }
+                        if (startKey == ConsoleKey.S) { status = TuiSettings.Show(session, token); continue; }
+                        if (startKey is ConsoleKey.D2 or ConsoleKey.NumPad2 || startInput.KeyChar == '2')
+                        { await TuiReference.ShowAsync(session, recycle, folder, token); continue; }
+                        if (startKey == ConsoleKey.P)
+                        {
+                            var request = await TuiAnalysis.ShowAsync(session, folder?.Id, token);
+                            if (request is not null) { SelectRule(EditRule(session.Folder(request.FolderId.ToString()), null, request.Rule), request.FolderId); starting = false; }
+                            continue;
+                        }
+                        if (startKey is ConsoleKey.D1 or ConsoleKey.NumPad1 or ConsoleKey.Enter)
+                        { starting = false; continue; }
+                    }
+                    catch (FormCanceledException) { status = "입력 취소 · 설정 보존"; }
+                    catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException) { Notice(ex.Message); }
+                    continue;
+                }
                 Dashboard.Draw(folders, folderIndex, ruleIndex, pane, status);
                 var input = TerminalText.Key(token);
                 var key = input.Key;
@@ -41,7 +69,8 @@ internal sealed class Tui(TerminalSession session, IRecycleBin recycle, Cancella
                 {
                     if (TuiHelp.IsHelp(input)) { TuiHelp.Show(token, pane == 0 ? "folders add" : "rules add"); continue; }
                     if (key == ConsoleKey.Q) return;
-                    if (key == ConsoleKey.Escape) { if (pane == 0) return; pane = 0; continue; }
+                    if (key == ConsoleKey.O || key == ConsoleKey.Escape && pane == 0) { starting = true; continue; }
+                    if (key == ConsoleKey.Escape) { pane = 0; continue; }
                     if (key is ConsoleKey.Tab or ConsoleKey.LeftArrow or ConsoleKey.RightArrow) { pane = 1 - pane; continue; }
                     if (key is ConsoleKey.UpArrow or ConsoleKey.DownArrow)
                     {
@@ -111,14 +140,20 @@ internal sealed class Tui(TerminalSession session, IRecycleBin recycle, Cancella
             if (plan.SelectedCount > 0) await ExecuteAsync(session, recycle, plan, token);
             return;
         }
+        var scope = rules is null ? "폴더 전체 · 켜진 규칙" : rules.Count == 1
+                ? "선택 규칙 · " + folder.Rules.First(r => rules.Contains(r.Id)).Name : $"선택 규칙 {rules.Count}개";
+        await ReviewPlanAsync(session, recycle, folder, plan, scope, token);
+    }
+
+    internal static async Task ReviewPlanAsync(TerminalSession session, IRecycleBin recycle, FolderSpec folder,
+        DiskPlanStore plan, string scope, CancellationToken token)
+    {
         long page = 0; var index = 0;
         while (true)
         {
             var rows = plan.ReadPage(page * 100);
             index = Math.Clamp(index, 0, Math.Max(0, rows.Count - 1));
             if (!ViewportReady(token)) return;
-            var scope = rules is null ? "폴더 전체 · 켜진 규칙" : rules.Count == 1
-                ? "선택 규칙 · " + folder.Rules.First(r => rules.Contains(r.Id)).Name : $"선택 규칙 {rules.Count}개";
             Dashboard.Preview(folder, rows, index, page, plan, scope);
             var input = TerminalText.Key(token);
             if (TuiHelp.IsHelp(input)) { TuiHelp.Show(token, "run"); continue; }

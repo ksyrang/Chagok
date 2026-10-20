@@ -26,7 +26,7 @@ public partial class MainWindow : Window
     private DiskPlanStore? currentPlan;
     private const int PreviewPageSize = 100;
     private long previewPage;
-    private bool planExecutable;
+    private bool planExecutable, referencePlan;
     private CancellationTokenSource? workCancellation;
     private bool busy, modal, pumping, awaitingReview, exiting, exitAfterWork, monitoringPaused;
     private bool trayNoticeShown, closeRequested;
@@ -95,7 +95,7 @@ public partial class MainWindow : Window
         };
         selectedFolderId = settings.Folders.FirstOrDefault()?.Id;
         UpdateCloseHint();
-        RefreshFolders();
+        RefreshFolders(); ShowView(StartView);
         Loaded += async (_, _) => await RestartMonitoringAsync();
     }
 
@@ -237,15 +237,19 @@ public partial class MainWindow : Window
     {
         if (FolderList.SelectedItem is not FolderSpec folder) return;
         selectedFolderId = folder.Id;
+        var showStart = StartView.Visibility == Visibility.Visible;
         var showAnalysis = AnalysisView.Visibility == Visibility.Visible;
         InvalidatePlan(); RefreshRules();
-        if (showAnalysis) { AnalysisView.Bind(filenameAnalysis, folder.Id); ShowView(AnalysisView); } else ShowView(RulesView);
+        if (showAnalysis) { AnalysisView.Bind(filenameAnalysis, folder.Id); ShowView(AnalysisView); } else ShowView(showStart ? StartView : RulesView);
         PumpPending();
     }
 
     private void RefreshRules()
     {
         var folder = SelectedFolder;
+        StartFolderName.Text = folder?.Name ?? "등록된 검사 폴더 없음";
+        StartFolderPath.Text = folder?.Path ?? "왼쪽의 ＋로 검사할 폴더를 등록하거나 기준 폴더 방식으로 시작하세요.";
+        StartRulesButton.IsEnabled = folder is not null && !busy;
         FolderTitle.Text = folder?.Name ?? "시작하기";
         FolderPathText.Text = folder?.Path ?? "검사할 폴더를 추가하세요.";
         FolderTriggerText.Text = folder is null ? "" : folder.Trigger == TriggerMode.Manual ? "폴더 실행 조건: 수동 실행" :
@@ -341,7 +345,7 @@ public partial class MainWindow : Window
     private async Task<DiskPlanStore?> ScanAsync(Guid folderId, IReadOnlySet<Guid>? rules = null, bool automatic = false)
     {
         if (busy || settings.Folders.FirstOrDefault(f => f.Id == folderId) is not { } folder) return null;
-        ClearFilenameAnalysis(); InvalidatePlan();
+        ClearFilenameAnalysis(); InvalidatePlan(); PreviewBackButton.Content = "← 규칙 목록";
         SetBusy(true, "폴더를 검사하고 실행 계획을 디스크에 저장하고 있습니다…");
         ShowScanFeedback();
         ScanWarnings.Visibility = Visibility.Collapsed;
@@ -527,9 +531,10 @@ public partial class MainWindow : Window
         finally { SetBusy(false); PumpPending(); }
     }
     private void BackToRules(object sender, RoutedEventArgs e)
-    { if (busy) return; InvalidatePlan(); ShowView(RulesView); PumpPending(); }
+    { if (busy) return; var start = referencePlan; InvalidatePlan(); ShowView(start ? StartView : RulesView); PumpPending(); }
     private void ShowView(UIElement view)
     {
+        StartView.Visibility = ReferenceEquals(view, StartView) ? Visibility.Visible : Visibility.Collapsed;
         RulesView.Visibility = ReferenceEquals(view, RulesView) ? Visibility.Visible : Visibility.Collapsed;
         PreviewView.Visibility = ReferenceEquals(view, PreviewView) ? Visibility.Visible : Visibility.Collapsed;
         HistoryView.Visibility = ReferenceEquals(view, HistoryView) ? Visibility.Visible : Visibility.Collapsed;
@@ -538,7 +543,7 @@ public partial class MainWindow : Window
     private void InvalidatePlan(bool keepFeedback = false)
     {
         var previous = currentPlan;
-        currentPlan = null; planExecutable = false; awaitingReview = false; previewPage = 0;
+        currentPlan = null; planExecutable = false; referencePlan = false; awaitingReview = false; previewPage = 0;
         previewRows.Clear(); previous?.Dispose();
         if (!keepFeedback) ResetExecutionFeedback();
         if (ExecuteButton is not null) UpdateSelection();
@@ -636,6 +641,7 @@ public partial class MainWindow : Window
         if (value) workCancellation = new CancellationTokenSource();
         else { workCancellation?.Dispose(); workCancellation = null; }
         AddFolderButton.IsEnabled = !value; FolderList.IsEnabled = !value;
+        StartView.IsEnabled = !value;
         AnalyzeAllButton.IsEnabled = !value; AnalysisView.WorkState(value);
         RuleList.IsEnabled = !value; PendingBanner.IsEnabled = !value; ThemeButton.IsEnabled = !value && !exitAfterWork;
         if (value) ThemePopup.IsOpen = false;

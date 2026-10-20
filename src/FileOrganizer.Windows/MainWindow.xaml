@@ -58,14 +58,42 @@
    <Grid Grid.Column="1" Margin="28,24"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
     <Border x:Name="PendingBanner" Visibility="Collapsed" Background="{DynamicResource SoftBrush}" CornerRadius="5" Padding="12" Margin="0,0,0,16"><DockPanel><StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><Button Content="목록 확인" Click="OpenPending" Margin="8,0"/><Button Content="무시" Click="DismissPending"/></StackPanel><TextBlock x:Name="PendingText" VerticalAlignment="Center" TextWrapping="Wrap"/></DockPanel></Border>
     <Grid Grid.Row="1">
+     <ScrollViewer x:Name="StartView" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+      <StackPanel>
+       <TextBlock Text="어떤 방식으로 정리할까요?" Foreground="{DynamicResource TextBrush}" FontSize="25" FontWeight="SemiBold"/>
+       <TextBlock Text="직접 만든 규칙이나 이미 정리된 폴더로 시작하세요." Foreground="{DynamicResource SubBrush}" Margin="0,6,0,20" TextWrapping="Wrap"/>
+       <TextBlock x:Name="StartFolderName" Foreground="{DynamicResource TextBrush}" FontSize="16" FontWeight="SemiBold"/>
+       <TextBlock x:Name="StartFolderPath" Foreground="{DynamicResource SubBrush}" TextWrapping="Wrap" FontSize="12" Margin="0,4,0,24"/>
+       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="16"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+        <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="7" Padding="20">
+         <StackPanel><TextBlock Text="조건을 직접 정하고 싶을 때" Foreground="{DynamicResource SubBrush}" FontSize="12"/>
+          <TextBlock Text="규칙으로 정리" Foreground="{DynamicResource TextBrush}" FontSize="21" FontWeight="SemiBold" Margin="0,8,0,12"/>
+          <TextBlock Text="선택한 등록 폴더에 저장된 규칙으로 검사하고 실행합니다." Foreground="{DynamicResource SubBrush}" TextWrapping="Wrap" MinHeight="70"/>
+          <Button x:Name="StartRulesButton" Content="기존 규칙 목록 열기" Click="StartRules" Style="{StaticResource PrimaryButton}" Margin="0,18,0,0"/>
+         </StackPanel>
+        </Border>
+        <Border Grid.Column="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="7" Padding="20">
+         <StackPanel><TextBlock Text="정리해 둔 폴더가 있을 때" Foreground="{DynamicResource SubBrush}" FontSize="12"/>
+          <TextBlock Text="기준 폴더로 정리" Foreground="{DynamicResource TextBrush}" FontSize="21" FontWeight="SemiBold" Margin="0,8,0,12"/>
+          <TextBlock Text="하위 폴더명으로 목적지를 찾습니다. 검사할 폴더는 다음 화면에서 바꿀 수 있습니다." Foreground="{DynamicResource SubBrush}" TextWrapping="Wrap" MinHeight="70"/>
+          <Button Content="기준 폴더 선택하기" Click="StartReference" Style="{StaticResource PrimaryButton}" Margin="0,18,0,0"/>
+         </StackPanel>
+        </Border>
+       </Grid>
+       <Separator Margin="0,25,0,16"/>
+       <TextBlock Text="먼저 파일의 공통점을 살펴보고 싶나요?" Foreground="{DynamicResource TextBrush}"/>
+       <Button Content="파일명 분석" Click="OpenFilenameAnalysis" HorizontalAlignment="Left" Margin="0,10,0,0"/>
+       <TextBlock Text="두 방식 모두 이동할 파일과 목적지를 확인한 뒤 실행합니다." Foreground="{DynamicResource SubBrush}" TextWrapping="Wrap" FontSize="12" Margin="0,24,0,0"/>
+      </StackPanel>
+     </ScrollViewer>
      <Grid x:Name="RulesView"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-      <DockPanel Margin="0,0,0,22"><StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top"><Button x:Name="FolderOptionsButton" Width="40" Height="40" Padding="6" Click="EditFolder" Margin="8,0,0,0" ToolTip="폴더 설정" AutomationProperties.Name="폴더 설정">
+      <StackPanel><Button Content="← 정리 방식 선택" Click="BackToStart" HorizontalAlignment="Left" Margin="0,0,0,18"/><DockPanel Margin="0,0,0,22"><StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top"><Button x:Name="FolderOptionsButton" Width="40" Height="40" Padding="6" Click="EditFolder" Margin="8,0,0,0" ToolTip="폴더 설정" AutomationProperties.Name="폴더 설정">
        <Viewbox Width="26" Height="24" IsHitTestVisible="False"><Canvas Width="28" Height="24">
         <Path Data="M 2,8 L 2,20 Q 2,22 4,22 L 23,22 Q 25,22 25,20 L 25,10 Q 25,8 23,8 L 12,8 L 9,5 L 4,5 Q 2,5 2,8 Z" Stroke="{DynamicResource TextBrush}" StrokeThickness="1.7" StrokeLineJoin="Round"/>
         <Ellipse Canvas.Left="13" Canvas.Top="0" Width="15" Height="15" Fill="{DynamicResource SurfaceBrush}"/>
         <Viewbox Canvas.Left="13" Canvas.Top="0" Width="15" Height="15"><Canvas Width="24" Height="24"><Path Data="{StaticResource SettingsGearIcon}" Stroke="{DynamicResource TextBrush}" StrokeThickness="2" StrokeLineJoin="Round"/></Canvas></Viewbox>
        </Canvas></Viewbox>
-      </Button></StackPanel><StackPanel><TextBlock x:Name="FolderTitle" Text="시작하기" FontSize="25" FontWeight="SemiBold"/><TextBox x:Name="FolderPathText" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" MinHeight="24" Foreground="{DynamicResource SubBrush}" FontSize="12"/><TextBlock x:Name="FolderTriggerText" FontSize="12" Foreground="{DynamicResource AccentBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel></DockPanel>
+      </Button></StackPanel><StackPanel><TextBlock x:Name="FolderTitle" Text="시작하기" FontSize="25" FontWeight="SemiBold"/><TextBox x:Name="FolderPathText" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" MinHeight="24" Foreground="{DynamicResource SubBrush}" FontSize="12"/><TextBlock x:Name="FolderTriggerText" FontSize="12" Foreground="{DynamicResource AccentBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel></DockPanel></StackPanel>
       <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,20"><Button Content="파일명 분석" Click="OpenFilenameAnalysis" Margin="0,0,8,0"/><Button x:Name="AddRuleButton" Content="＋ 규칙 추가" Click="AddRule" Margin="0,0,8,0"/><Button x:Name="PreviewButton" Content="폴더 전체 검사 및 실행" Style="{StaticResource PrimaryButton}" Click="PreviewFolder" ToolTip="켜진 규칙 전체로 검사한 뒤 대상 목록에서 실행합니다."/></StackPanel>
       <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel><TextBlock x:Name="RuleCount" Foreground="{DynamicResource SubBrush}" FontSize="12" Margin="0,0,0,10"/><ItemsControl x:Name="RuleList"><ItemsControl.ItemTemplate><DataTemplate>
        <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="7" Padding="18" Margin="0,0,0,12"><Grid>

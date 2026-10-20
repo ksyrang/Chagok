@@ -10,8 +10,8 @@ public sealed record CommandHelp(string Name, string Title, string Description, 
 
 public static class HelpCatalog
 {
-    public const string Version = "0.6.6";
-    public const string Executable = "Chagok-v0.6.6.exe";
+    public const string Version = "0.8.0";
+    public const string Executable = "Chagok-v0.8.0.exe";
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
     private static OptionHelp O(string name, string description, bool required = false, string type = "string", string? fallback = null, params string[] choices)
@@ -56,8 +56,8 @@ public static class HelpCatalog
     private static OptionHelp[] Required(OptionHelp[] fields, params string[] names)
         => fields.Select(o => names.Contains(o.Name) ? o with { Required = true } : o).ToArray();
     public static IReadOnlyList<CommandHelp> Commands { get; } = Array.AsReadOnly(new[] {
-        C("tui", "화면으로 사용", "폴더·규칙을 보고 선택한 항목을 검사·실행합니다. F1 또는 ?로 기능 도움말을 엽니다.", "tui", ["설정 편집 가능", "확인 후 파일 이동 가능"], "이동 전 전체 선택 개수로 확인", [], ["tui"],
-            ["P 파일명 분석. Tab 영역 전환 → ↑↓ 규칙 선택 → R 이 규칙만 검사 → Enter → Y로 이동합니다. A는 폴더 전체입니다.", "F 폴더 추가, N 규칙 추가, E 편집, Space 규칙 켜기/끄기. 입력 중 Esc는 저장하지 않고 돌아가기입니다.", "S 설정은 ↑↓/1~4로 항목을 골라 ←→/Enter/Space로 값을 바꿉니다. S 저장, Esc 변경 취소입니다.", "폴더/규칙 폼은 ↑↓/Tab/1~9로 항목 선택, Enter/E 텍스트 편집, ←→ 선택값 변경, I 전체 값 확인입니다. S 검토 후 Y 저장. 입력칸 Esc는 항목 취소, 목록 Esc는 전체 폼 취소입니다.", "대화형 터미널이 필요하며 --json은 지원하지 않습니다."]),
+        C("tui", "화면으로 사용", "시작 화면에서 1 규칙 또는 2 기준 폴더 정리를 선택합니다. 기존 규칙 대시보드와 명시 실행을 유지합니다. F1/?로 도움말을 엽니다.", "tui", ["설정 편집 가능", "확인 후 파일 이동 가능"], "이동 전 전체 선택 개수로 확인", [], ["tui"],
+            ["시작 화면: ↑↓ 기본 폴더, 1/Enter 기존 규칙, 2 기준 폴더. O 또는 폴더 영역 Esc로 시작 화면 복귀.", "기준 폴더: 검사/기준 경로 설정 → 목적지 검색어 편집 → R 분석. Tab 파일/그룹, F 필터, N/P 페이지, I 상세, D 목적지 지정, H 보류, W 경고, V 이동 계획 검토. 미등록 위치는 이번에만 사용하며 영구 규칙은 저장하지 않습니다.", "P 파일명 분석. Tab 영역 전환 → ↑↓ 규칙 선택 → R 이 규칙만 검사 → Enter → Y로 이동합니다. A는 폴더 전체입니다.", "F 폴더 추가, N 규칙 추가, E 편집, Space 규칙 켜기/끄기. 입력 중 Esc는 저장하지 않고 돌아가기입니다.", "S 설정은 ↑↓/1~4로 항목을 골라 ←→/Enter/Space로 값을 바꿉니다. S 저장, Esc 변경 취소입니다.", "폴더/규칙 폼은 ↑↓/Tab/1~9로 항목 선택, Enter/E 텍스트 편집, ←→ 선택값 변경, I 전체 값 확인입니다. S 검토 후 Y 저장. 입력칸 Esc는 항목 취소, 목록 Esc는 전체 폼 취소입니다.", "대화형 터미널이 필요하며 --json은 지원하지 않습니다."]),
         C("folders list", "검사 폴더 조회", "등록된 폴더의 ID·이름·경로·규칙 개수·실행 조건을 조회합니다.", "folders list", ["설정 조회"], "없음", [], ["folders list --json"]),
         C("folders add", "검사 폴더 추가", "이름·검사 위치·제외 경로·실행 조건을 등록합니다. 저장만으로 파일은 이동하지 않습니다.", "folders add --name 이름 --path 전체경로", ["설정 저장"], "명령 실행으로 저장", Required(FolderFields, "name", "path"), ["folders add --name 다운로드 --path C:\\Data\\Inbox"], ["폴더 기본값: 수동, 목록 확인. 검사 폴더는 이미 존재해야 합니다."]),
         C("folders update", "검사 폴더 편집", "지정한 필드만 바꾸고 나머지는 유지합니다. 검사 경로 변경 시 생략한 제외 경로는 같은 상대 위치로 재배치합니다.", "folders update --folder ID [옵션]", ["설정 저장"], "명령 실행으로 저장", [Folder, ..FolderFields], ["folders update --folder 다운로드 --name 받은파일"]),

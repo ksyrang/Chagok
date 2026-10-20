@@ -67,59 +67,60 @@ public sealed class Planner
                     if (System.IO.Path.GetFileName(path).StartsWith(".fileorganizer-", StringComparison.Ordinal)) continue;
                     var rule = rules.FirstOrDefault(r => RuleMatcher.Matches(r, path, depth));
                     if (rule is null) continue;
-                    sink.AddEntry(PlanFile(path, rule));
+                    sink.AddEntry(PlanFile(path, rule, sink));
                 }
                 catch (Exception ex) when (ex is not ScanStorageException and not FilenamePatternTimeoutException && (ex is IOException or UnauthorizedAccessException or ArgumentException))
                 { sink.AddWarning($"검사 생략: {path} — {ex.Message}"); }
             }
         }
+    }
 
-        PlanEntry PlanFile(string path, RuleSpec rule)
+    internal static PlanEntry PlanFile(string path, RuleSpec rule, IScanSink sink, FileStamp? expected = null)
+    {
+        var stamp = FileStamp.Read(path);
+        if (expected is not null && stamp != expected) throw new IOException("분석 이후 원본이 변경되었습니다. 다시 분석하세요.");
+        var destination = DestinationPaths.Resolve(rule);
+        var target = System.IO.Path.Combine(destination, System.IO.Path.GetFileName(path));
+        var action = PlanAction.Move;
+        var reason = "파일명·확장자 조건 일치";
+        FileStamp? targetStamp = null;
+        if (PathSafety.Comparer.Equals(path, target))
+            return Entry(PlanAction.Skip, "이미 이동 위치에 있습니다.");
+        try
         {
-            var stamp = FileStamp.Read(path);
-            var destination = DestinationPaths.Resolve(rule);
-            var target = System.IO.Path.Combine(destination, System.IO.Path.GetFileName(path));
-            var action = PlanAction.Move;
-            var reason = "파일명·확장자 조건 일치";
-            FileStamp? targetStamp = null;
-            if (PathSafety.Comparer.Equals(path, target))
-                return Entry(PlanAction.Skip, "이미 이동 위치에 있습니다.");
-            try
-            {
-                using var probe = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            { return Entry(PlanAction.Blocked, "파일이 사용 중이거나 읽기 권한이 없습니다. " + ex.Message); }
-            if (!DestinationPaths.CreatesDirectory(rule) && !Directory.Exists(destination))
-                return Entry(PlanAction.Blocked, "이동 폴더가 없습니다. 자동 생성이 꺼져 있습니다.");
-            if (Directory.Exists(target)) return Entry(PlanAction.Blocked, "대상 위치에 같은 이름의 폴더가 있습니다.");
-            if (File.Exists(target) || sink.IsReserved(target))
-            {
-                if (rule.Conflict == ConflictMode.Skip) return Entry(PlanAction.Skip, "같은 이름의 파일이 있어 건너뜁니다.");
-                if (rule.Conflict == ConflictMode.Replace)
-                {
-                    if (sink.IsReserved(target)) return Entry(PlanAction.Blocked, "여러 파일의 이동 위치가 같습니다. 이름 변경 옵션을 사용하세요.");
-                    PathSafety.AssertNoLinks(target);
-                    targetStamp = FileStamp.Read(target);
-                    action = PlanAction.Replace;
-                    reason = "같은 이름의 기존 파일을 휴지통으로 옮긴 뒤 교체";
-                }
-                else
-                {
-                    var name = System.IO.Path.GetFileNameWithoutExtension(target);
-                    var extension = System.IO.Path.GetExtension(target);
-                    for (var number = 1; File.Exists(target) || Directory.Exists(target) || sink.IsReserved(target); number++)
-                        target = System.IO.Path.Combine(destination, $"{name} ({number}){extension}");
-                    action = PlanAction.Rename;
-                    reason = "이름 충돌을 피하도록 번호 추가";
-                }
-            }
-            sink.Reserve(target);
-            return Entry(action, reason);
-
-            PlanEntry Entry(PlanAction kind, string explanation) => new(Guid.NewGuid(), path, target,
-                rule.Name, kind, explanation, stamp, targetStamp, DestinationPaths.CreatesDirectory(rule));
+            using var probe = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
         }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        { return Entry(PlanAction.Blocked, "파일이 사용 중이거나 읽기 권한이 없습니다. " + ex.Message); }
+        if (!DestinationPaths.CreatesDirectory(rule) && !Directory.Exists(destination))
+            return Entry(PlanAction.Blocked, "이동 폴더가 없습니다. 자동 생성이 꺼져 있습니다.");
+        if (Directory.Exists(target)) return Entry(PlanAction.Blocked, "대상 위치에 같은 이름의 폴더가 있습니다.");
+        if (File.Exists(target) || sink.IsReserved(target))
+        {
+            if (rule.Conflict == ConflictMode.Skip) return Entry(PlanAction.Skip, "같은 이름의 파일이 있어 건너뜁니다.");
+            if (rule.Conflict == ConflictMode.Replace)
+            {
+                if (sink.IsReserved(target)) return Entry(PlanAction.Blocked, "여러 파일의 이동 위치가 같습니다. 이름 변경 옵션을 사용하세요.");
+                PathSafety.AssertNoLinks(target);
+                targetStamp = FileStamp.Read(target);
+                action = PlanAction.Replace;
+                reason = "같은 이름의 기존 파일을 휴지통으로 옮긴 뒤 교체";
+            }
+            else
+            {
+                var name = System.IO.Path.GetFileNameWithoutExtension(target);
+                var extension = System.IO.Path.GetExtension(target);
+                for (var number = 1; File.Exists(target) || Directory.Exists(target) || sink.IsReserved(target); number++)
+                    target = System.IO.Path.Combine(destination, $"{name} ({number}){extension}");
+                action = PlanAction.Rename;
+                reason = "이름 충돌을 피하도록 번호 추가";
+            }
+        }
+        sink.Reserve(target);
+        return Entry(action, reason);
+
+        PlanEntry Entry(PlanAction kind, string explanation) => new(Guid.NewGuid(), path, target,
+            rule.Name, kind, explanation, stamp, targetStamp, DestinationPaths.CreatesDirectory(rule));
     }
 
     private sealed class MemorySink : IScanSink

@@ -3,6 +3,36 @@
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  ShutdownMode="OnExplicitShutdown">
  <Application.Resources>
+  <Style x:Key="AnalysisSection" TargetType="Expander">
+   <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+   <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+   <Setter Property="Template"><Setter.Value>
+    <ControlTemplate TargetType="Expander">
+     <DockPanel>
+      <ToggleButton x:Name="HeaderToggle" DockPanel.Dock="Top" Style="{x:Null}" HorizontalContentAlignment="Stretch" Foreground="{DynamicResource TextBrush}"
+       AutomationProperties.Name="{Binding Path=(AutomationProperties.Name), RelativeSource={RelativeSource TemplatedParent}}"
+       IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" Content="{TemplateBinding Header}">
+       <ToggleButton.Template><ControlTemplate TargetType="ToggleButton">
+        <Border x:Name="HeaderFrame" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="6" Padding="14,10">
+         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+          <Path x:Name="Chevron" Data="M 0,0 L 4,4 L 8,0" Stroke="{DynamicResource SubBrush}" StrokeThickness="1.5" VerticalAlignment="Center" HorizontalAlignment="Left" RenderTransformOrigin="0.5,0.5"><Path.RenderTransform><RotateTransform Angle="-90"/></Path.RenderTransform></Path>
+          <ContentPresenter Grid.Column="1" HorizontalAlignment="Stretch" RecognizesAccessKey="True"/>
+         </Grid>
+        </Border>
+        <ControlTemplate.Triggers>
+         <Trigger Property="IsChecked" Value="True"><Setter TargetName="Chevron" Property="RenderTransform"><Setter.Value><RotateTransform Angle="0"/></Setter.Value></Setter></Trigger>
+         <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="HeaderFrame" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/></Trigger>
+         <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="HeaderFrame" Property="Background" Value="{DynamicResource SoftBrush}"/></Trigger>
+        </ControlTemplate.Triggers>
+       </ControlTemplate></ToggleButton.Template>
+      </ToggleButton>
+      <ContentPresenter x:Name="SectionContent" ContentSource="Content" Visibility="Collapsed" Margin="0,12,0,0"/>
+     </DockPanel>
+     <ControlTemplate.Triggers><Trigger Property="IsExpanded" Value="True"><Setter TargetName="SectionContent" Property="Visibility" Value="Visible"/></Trigger></ControlTemplate.Triggers>
+    </ControlTemplate>
+   </Setter.Value></Setter>
+  </Style>
+
   <Style TargetType="Window"><Setter Property="Icon" Value="pack://application:,,,/Assets/chagok.ico"/><Setter Property="FontFamily" Value="Segoe UI, Malgun Gothic"/><Setter Property="FontSize" Value="14"/><Setter Property="Background" Value="{DynamicResource PageBrush}"/><Setter Property="Foreground" Value="{DynamicResource TextBrush}"/></Style>
   <Style TargetType="Button">
    <Setter Property="FontFamily" Value="Segoe UI, Malgun Gothic"/><Setter Property="FontSize" Value="14"/>

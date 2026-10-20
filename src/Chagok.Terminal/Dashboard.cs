@@ -43,7 +43,7 @@ public static class Dashboard
         lines.Add("[A 폴더 전체 검사 및 실행]  [P 파일명 분석]");
         lines.Add("Tab 영역 · ↑↓ 선택 · Enter 규칙/검사 · Space 켜기/끄기");
         lines.Add("E 편집 · N 규칙 · F 폴더 · C 복제 · D 제거 · I 상세");
-        lines.Add("F1/? 기능 도움말 · H 기록 · S 설정 · W 감지 · Q 종료");
+        lines.Add("O 시작 · F1/? 도움말 · H 기록 · S 설정 · W 감지 · Q 종료");
         return lines;
     }
     public static IReadOnlyList<Selection> Selections(int width, int height, IReadOnlyList<FolderSpec> folders,

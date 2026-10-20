@@ -923,6 +923,7 @@ AnalysisChecks.Register(Add);
 ConditionChecks.Register(Add);
 RegexLessonChecks.Register(Add);
 AnalysisAccordionChecks.Register(Add);
+ReferenceOrganizationChecks.Register(Add);
 var failures = 0;
 Add("통합 EXE는 GUI·탐색기와 터미널 명령을 분리", () =>
 {

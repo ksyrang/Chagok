@@ -13,7 +13,9 @@ internal static class EditorUi
     public static TextBox Input(string text) => new() { Text = text, Margin = new(0, 0, 0, 12) };
     public static void Field(Panel parent, string label, Control control)
     {
-        parent.Children.Add(new TextBlock { Text = label, FontSize = 12, Margin = new(0, 0, 0, 6) });
+        var caption = new TextBlock { Text = label, FontSize = 12, Margin = new(0, 0, 0, 6) };
+        caption.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
+        parent.Children.Add(caption);
         AutomationProperties.SetName(control, label);
         parent.Children.Add(control);
     }

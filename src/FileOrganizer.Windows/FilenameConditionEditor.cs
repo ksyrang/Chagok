@@ -49,6 +49,7 @@ internal sealed class FilenameConditionPanel : StackPanel
 
     public FilenameConditionPanel(FilenameConditionSet original)
     {
+        feedback.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
         var draft = Storage.Clone(original);
         var choices = new Grid();
         choices.ColumnDefinitions.Add(new ColumnDefinition()); choices.ColumnDefinitions.Add(new ColumnDefinition());
@@ -71,6 +72,7 @@ internal sealed class FilenameConditionPanel : StackPanel
         include = new CheckBox { Content = "그룹 이름에 괄호 포함", IsChecked = draft.IncludeBrackets, Margin = new(0, 4, 0, 12) };
         include.ToolTip = "켜면 [업무], 끄면 업무로 묶습니다. 분석 결과에서 만든 규칙도 같은 기준을 사용합니다."; Children.Add(include);
         validation = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 14, Margin = new(0, 0, 0, 10) };
+        validation.SetResourceReference(TextBlock.ForegroundProperty, "ErrorBrush");
         AutomationProperties.SetName(validation, "분류 조건 입력 오류"); AutomationProperties.SetLiveSetting(validation, AutomationLiveSetting.Polite); Children.Add(validation);
         sample = EditorUi.Input("[xyz] [x] [y] 보고서.pdf"); sample.MaxLength = 1000;
         EditorUi.Field(this, "시험할 파일명 (확장자 포함)", sample);

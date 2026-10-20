@@ -1,3 +1,15 @@
+## 0.8.0 · 정리 방식 시작 화면과 기준 폴더 TUI (2026-10-20)
+
+- GUI 시작 화면에 규칙으로 정리/기준 폴더로 정리를 나란히 배치했다. 기존 규칙 목록·검사·실행 화면은 유지하고 시작 화면으로 돌아가는 링크를 추가했다. 파일명 분석은 보조 기능으로 유지한다.
+- 기준 폴더 방식만 검사 위치를 이번 작업에 한해 바꿀 수 있다. 같은 등록 경로는 제외 설정을 복제하고, 다른 경로는 영구 등록/규칙/설정을 변경하지 않는다. GUI 입력 변경 시 이전 이동 계획 생성을 차단한다.
+- TUI 1/2 진입, O 시작 복귀, 검색어/검색 방법 편집, 후보 확인, 파일/그룹 목적지 지정, 보류, 페이지, 이동 계획 검토와 기존 명시 실행을 연결했다.
+- 관련 핵심 검사 44개 통과: ReferenceOrganization 11개, OrganizationStart 1개(60/80/110열), 기존 분석/규칙/계획/실행 회귀 32개. 전체 검사를 실행했다고 주장하지 않는다.
+- 실제 macOS PTY: 새 기준 폴더 흐름에서 별칭·복수 후보 선택·그룹 전체 지정·취소·5개 파일 명시 이동·설정 바이트 보존 통과. 별도 60열/24행·등록 폴더 없음·205개/3페이지·전체 그룹 지정·페이지 간 선택·취소와 파일/설정 보존 통과. 기존 규칙 생성/편집/개별 이동과 파일명 분석→규칙 초안→확인 후 이동 smoke도 통과했다.
+- 증거: /private/tmp/chagok-reference-tui-cd3d1axz, /private/tmp/chagok-reference-pages-unlwn8e_, chagok-tui-rule-g5oqp3kq, chagok-analysis-4ax9ybmw. 핵심 회귀 로그 /private/tmp/chagok080-regression.log.
+- Windows x64 자체 포함 단일 EXE 게시 성공. XAML 및 명시적 테마 색 연결을 정적으로 확인한다. 실제 Windows 렌더링·테마 전환·비활성/선택 상태·배율·IME는 macOS에서 실행하지 못했다. 수동 확인 항목을 windows-test-guide.md에 추가했다.
+- 외장 SSD 읽기 오류로 내부 임시 복사본에서 검증했다. 반영 시 기준 SHA256과 원본을 비교해 다른 변경을 보존하고, 테스트/게시한 소스와 SSD의 최종 파일 일치를 확인한다. 배포물 검증 결과는 /private/tmp/chagok080-package-verification.json, 동기화 결과는 /private/tmp/chagok080-source-sync.json에 저장한다.
+- 이전 ZIP을 보존한다. 커밋·푸시·GitHub 릴리스는 생성하지 않는다.
+
 # 0.6.2 검증 · 2026-10-20
 
 - 기존 조건 선택 GUI/TUI를 보존하고 정규식 입력 방법 창을 예시/직접 연습 TabControl로 분리. 예시 버튼에서 해당 식·파일명을 채워 이동, 탭만 왕복할 때는 초안 유지. 고정 prefix/suffix와 수정 fragment를 볼드/밑줄/색으로 구분하고 연결된 부분 편집칸 제공.
@@ -538,3 +550,28 @@ XML 4개 파싱과 복제 버튼·폴더 조건·시작 인수·기존 앱 전�
 dotnet build tests/FileOrganizer.Checks/FileOrganizer.Checks.csproj -m:1 -p:BuildInParallel=false --disable-build-servers
 dotnet tests/FileOrganizer.Checks/bin/Debug/net10.0/FileOrganizer.Checks.dll --filter AnalysisAccordion
 ```
+
+## 0.7.0 · 기준 폴더 정리 GUI (2026-10-20)
+
+- 변경 범위: 기준 폴더/검색어/별칭 설정, 목적지 후보 비교와 결정, 미분류 파일 그룹, 전용 GUI 설정/결과 아코디언, 기존 미리보기·이동 실행 연결. 파일별 계획 생성을 Planner 공통 함수로 분리하고 기존 실행기·설정 스키마·첫 일치 규칙의 동작은 유지했다. 아코디언 템플릿은 기존 내용을 그대로 App 리소스로 옮겨 두 화면에서 공유한다.
+- 새 ReferenceOrganization 검사 10/10 통과: 폴더명·별칭·괄호/대소문자 기준, 동일 목적지 중복 집계 방지, 복수 후보 보류와 사용자 선택 반영, 새 그룹/중첩 그룹/폴더명 검증, 205개 파일·105개 그룹 페이지와 전체 그룹 적용, 재귀/제외/기준 폴더 중첩/링크 제외, 분석 이후 원본 변경·삭제 보류, 실제 이동·이름 충돌·새 폴더 생성·예약 경로 충돌·실행 전 변경 방어, 저장소 손상 시 중단, 정규식·취소·캐시 정리.
+- 기존 관련 검사 32/32 통과: 일반 규칙 첫 일치와 규칙별 검사, 미리보기/하위 폴더/제외, 이름 충돌·건너뛰기·교체·휴지통 실패·원본 변경·취소, 디스크 계획/페이지 선택/결과 저장, 기존 AnalysisAccordion 6개, 버전이 바뀐 CLI 도움말. 새 검사와 합계 42/42. 원본 이동·보존은 macOS 테스트 임시 파일로 실행했으며 Windows UI/휴지통 실동작 검증은 아니다. 무관한 프로그램 감지·탐색기 등록·TUI 조작 전체 검사는 반복하지 않았다.
+- 초기 테스트 임시 경로가 macOS의 /var 링크를 포함해 차단된 것을 확인하고 기존 검사와 같은 /private/tmp 경로로 수정했다. 포함 검색의 대소문자 무시 동작에 맞춰 테스트 기대값을 수정했다. 제품 안전 기준을 완화하지 않았다.
+- 후속 변경: 폴더 새로 가져오기에서 같은 목적지의 검색어 초안을 보존하고, 기존/새 목적지 선택을 라디오로 구분했다. DB 폐기 오류 처리 변경 뒤 저장소 오류/정규식·취소·캐시 정리의 관련 검사 2개를 재실행해 모두 통과했다. 최종 핵심 검사 프로젝트 빌드는 경고/오류 0.
+- NuGet 복원: 불완전한 이전 캐시 대신 기존 정상 캐시 /private/tmp/chagok-nuget-20261020을 사용했다. 제한 환경에서 실패한 취약성 정보 조회는 승인된 네트워크 접근으로 복원에 성공했다. 프로젝트에서 취약성 검사나 경고를 끄지 않았다.
+- Windows x64 자체 포함·압축 단일 EXE 게시 성공. 최종 소스 수정 시각이 게시물보다 앞서는지 확인했다. PE x64/콘솔 진입점, EXE 안의 앱·Core 어셈블리가 Release 출력과 동일함, e_sqlite3.dll 포함, 기존 브랜드/탐색기 자산 7개 일치와 버전 0.7.0 포함을 확인했다. 기존 네이티브 DLL은 수정하지 않았다.
+- App/기존 분석/새 창 XAML 파싱 통과. CLI help --json과 docs/cli-reference.json의 전체 내용이 일치한다. 기존 설정 파일과 공개 0.6.6 릴리스는 변경하지 않았다.
+- 미검증: 실제 Windows WPF의 새 창·작은 작업 영역/100·150·200% 배율·라이트/다크/시스템·키보드/보조 기술·취소 중 닫기·감지 요청 대기. docs/windows-test-guide.md의 0.7.0 항목으로 확인해야 한다. 영구 규칙/검색어 저장과 새 TUI/CLI 진입점은 이번 범위에 포함하지 않았다.
+
+검사 로그: /private/tmp/chagok070-related-checks.log. 게시물 검증: /private/tmp/chagok070-artifact-verification.json. EXE SHA256: af9bcff429749c2facc5d477cca2a36d7e3f91d2f95466dcd041128e7d1b6db8.
+
+- 패키지 생성 과정에서 외장 드라이브가 자동 생성한 macOS AppleDouble 파일을 검출했다. ZIP과 SHA256 목록에서 모든 `._*`·`.DS_Store` 항목을 제외하도록 수정했다.
+
+## 0.7.1 · 분석 화면 다크 테마 글자색 수정 (2026-10-20)
+
+- 사용자 Windows 스크린샷에서 기준 폴더 창과 기존 분석 화면의 제목·항목명·시험 결과가 검게 표시되는 것을 확인했다. 디자인 스펙에 이미 테마 기준이 있었으며 구현에서 명시적 텍스트 색 연결이 누락됐다.
+- 두 화면의 TextBlock 43개 전체에 기존 명시 색 또는 TextBrush가 연결되는지 확인했다. 기준 폴더 창의 라디오 2개와 공통 AnalysisSection, EditorUi.Field의 항목명, FilenameConditionPanel 시험 결과/오류에 DynamicResource/SetResourceReference를 적용했다. 일반 텍스트는 TextBrush, 보조 문구는 SubBrush, 조건 오류는 ErrorBrush를 사용한다. 글로벌 TextBlock 스타일은 추가하지 않았고 PrimaryButton의 OnAccentBrush를 보존했다.
+- 영향 범위는 두 분석 화면·조건 패널과 Field를 쓰는 편집 화면의 항목명·공유 아코디언이다. 파일 검색/이동·설정 모델·목적지 선택 로직은 바꾸지 않아 관련 없는 전체 기능 검사를 반복하지 않았다.
+- XAML 파싱과 텍스트/라디오의 명시적 색 연결, 공통 스타일 및 프로그램 생성 텍스트 경로를 검토했다. 두 테마의 Text/Sub/Error와 Page/Surface 조합 12개를 계산해 모두 4.5:1 이상: 라이트 5.50~14.67, 다크 6.93~15.07. 강조 버튼 글자/배경도 4.5:1 이상이다. 정적 팔레트 값 기준이며 비활성 투명도·실화면 합성 결과를 측정한 것은 아니다.
+- 0.7.1 Windows x64 자체 포함·압축 단일 EXE 게시 성공. 실제 Windows WPF 렌더링·테마 전환·비활성/선택 상태·배율은 이 macOS에서 실행하지 못했다. docs/windows-test-guide.md에 재확인 항목을 추가했다.
+- 정적 검토 기록: /private/tmp/chagok071-theme-review.json. 배포물 검증 결과는 /private/tmp/chagok071-package-verification.json에 저장한다.
