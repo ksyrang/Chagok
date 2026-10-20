@@ -32,6 +32,7 @@ public sealed class TerminalSession(Storage storage, AppSettings settings)
         SettingsValidation.Rule(folder, rule);
         var index = folder.Rules.FindIndex(r => r.Id == rule.Id);
         if (index < 0) folder.Rules.Add(rule); else folder.Rules[index] = rule;
+        DestinationPaths.Remember(folder, rule);
         PutFolder(folder);
     }
     public void RemoveFolder(Guid id)
@@ -47,7 +48,7 @@ public sealed class TerminalSession(Storage storage, AppSettings settings)
     {
         if (PathSafety.IsWithin(folder.Path, PathSafety.Normalize(Storage.DirectoryPath)))
             throw new ArgumentException("차곡 데이터 저장소는 검사 폴더로 사용할 수 없습니다.");
-        var destinations = Settings.Folders.SelectMany(f => f.Rules).Select(r => r.Destination)
+        var destinations = Settings.Folders.SelectMany(f => f.Rules).Select(DestinationPaths.Resolve)
             .Append(PathSafety.Normalize(Storage.DirectoryPath)).ToArray();
         return new Planner().ScanToDisk(FileOrganizer.Core.Storage.Clone(folder), destinations,
             Path.Combine(Storage.DirectoryPath, "scan-cache"), rules, token);

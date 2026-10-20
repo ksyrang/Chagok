@@ -10,7 +10,7 @@ internal sealed record RuleRow(RuleSpec Spec)
     public string ConditionText => "조건  " + (Spec.Match == NameMatch.Any ? "파일명 제한 없음" :
         Spec.Match switch { NameMatch.Contains => $"이름에 ‘{Spec.Pattern}’ 포함", NameMatch.StartsWith => $"‘{Spec.Pattern}’로 시작", _ => $"패턴 ‘{Spec.Pattern}’" })
         + " · " + (Spec.Extensions.Length == 0 ? "모든 확장자" : Spec.Extensions);
-    public string DestinationText => "이동  " + Spec.Destination;
+    public string DestinationText => "이동  " + DestinationPaths.Preview(Spec);
     public string TriggerText => Spec.Trigger == TriggerMode.Manual ? "수동 실행" :
         Path.GetFileName(Spec.ProgramPath) + (Spec.Trigger == TriggerMode.ProgramStarted ? " 실행 시" : " 종료 시")
         + (Spec.RunMode == RunMode.Confirm ? " · 목록 확인 후 실행" : " · 자동 실행");

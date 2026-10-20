@@ -73,7 +73,7 @@ try:
  # 목적지 누락 저장 실패 후 같은 폼에서 수정한다.
  send('n','항목 선택');send('s','위 검사 폴더에 규칙을 저장할까요')
  send('y','처리 실패');assert (data/'settings.json').read_bytes()==before
- focus(5);send('e','현재 조건에서는 이 항목을 사용하지 않습니다.')
+ focus(5);send('e','파일명 제한 없음')
  focus(4);send('\x1b[C','단어 포함')
  edit(5,'단어 또는 패턴','temporary')
  focus(4);send('\x1b[D','제한 없음')
@@ -116,7 +116,7 @@ try:
  send('f','항목 선택')
  edit(3,'제외할 하위 폴더',str(new_source/'private'))
  edit(2,'검사할 폴더 전체 경로',str(new_source));edit(1,'표시 이름','NEW-FOLDER')
- focus(5);send('e','현재 조건에서는 이 항목을 사용하지 않습니다.')
+ focus(5);send('e','실행 조건이 수동')
  focus(4);send('\x1b[C','프로그램 시작');edit(5,'감지할 .exe 전체 경로',str(program))
  send('s','폴더 설정을 저장할까요');send('y','폴더 저장 완료')
  new_folder=next(x for x in json.loads((data/'settings.json').read_text())['Folders'] if x['Name']=='NEW-FOLDER')
@@ -134,10 +134,40 @@ try:
  send('e','항목 선택');edit(1,'표시 이름','RENAMED-FOLDER')
  send('s','폴더 설정을 저장할까요');send('y','폴더 저장 완료')
  assert next(x for x in json.loads((data/'settings.json').read_text())['Folders'] if x['Id']==cloned['Id'])=={**cloned,'Name':'RENAMED-FOLDER'}
+ # 최근 위치와 규칙명 하위 폴더: 폴더 설정 → 저장 → 다른 규칙에서 최근 기본 위치 선택.
+ send('e','항목 선택');focus(7);send(' ','켜짐')
+ send('s','폴더 설정을 저장할까요');send('y','폴더 저장 완료')
+ nested_dst=root/'nested-target'
+ send('n','항목 선택');edit(1,'규칙 이름','NESTED');edit(7,'이동할 폴더 전체 경로',str(nested_dst))
+ focus(13);send(' ','켜짐')
+ focus(8);forced=send('e','규칙명 폴더 사용이 켜져')
+ assert '켜짐 · 자동 적용' in forced
+ full=send('i','전체 값 · 대상 폴더 자동 생성');assert '자동 생성이 적용' in full
+ send('\x1b','항목 선택');save_rule()
+ state=json.loads((data/'settings.json').read_text());nf=next(x for x in state['Folders'] if x['Id']==cloned['Id'])
+ assert nf['RecentDestinations']==[str(nested_dst)] and nf['Rules'][-1]['AppendRuleName']
+ assert not nested_dst.exists()
+ send('n','항목 선택');edit(1,'규칙 이름','RECENT')
+ focus(7);filled=send('i','전체 값 · 이동할 폴더 전체 경로')
+ assert str(nested_dst) in compact(filled) and '기능과 연계 항목' in filled
+ send('\x1b','항목 선택');edit(7,'이동할 폴더 전체 경로',str(root/'temporary-base'))
+ focus(14);send('\x1b[C','수정 중')
+ chosen=send('i','전체 값 · 최근 사용한 이동 위치');assert str(nested_dst) in compact(chosen)
+ send('\x1b','항목 선택')
+ focus(13);send(' ','켜짐');save_rule()
+ state=json.loads((data/'settings.json').read_text());nf=next(x for x in state['Folders'] if x['Id']==cloned['Id'])
+ assert nf['Rules'][-1]['Destination']==str(nested_dst) and nf['RecentDestinations']==[str(nested_dst)]
+ (cloned_source/'nested.txt').write_text('nested-content')
+ send('r','검사 및 실행');send('\r','실행할까요');send('y','아무 키나 눌러 결과 확인')
+ assert (nested_dst/'RECENT'/'nested.txt').read_text()=='nested-content'
+ send(' ','파일별 처리 결과');send('\r','선택 규칙  RECENT')
+ before_cancel=(data/'settings.json').read_bytes();send('n','항목 선택')
+ focus(14);send('\x1b[C','수정 중');send('\x1b','입력 취소')
+ assert (data/'settings.json').read_bytes()==before_cancel
  # 최소 창: 목록 스크롤/끝 항목/긴 입력의 항목 취소/전체 취소.
  fcntl.ioctl(m,termios.TIOCSWINSZ,struct.pack('HHHH',24,61,0,0))
  before_small=(data/'settings.json').read_bytes();send('n','항목 선택')
- last=send('\x1b[F','감지 후 처리');assert 'S 검토·저장' in last and '사용 안 함' in last
+ last=send('\x1b[F','최종 이동 폴더');assert 'S 검토·저장' in last and '사용 안 함' in last
  focus(7);send('e','입력 · 이동할 폴더 전체 경로')
  send('x'*180+'\x1b','항목 편집 취소');send('\x1b','입력 취소')
  assert (data/'settings.json').read_bytes()==before_small
@@ -153,4 +183,4 @@ try:
 finally:
  if p.poll() is None:p.terminate();p.wait(timeout=5)
  os.close(m);(root/'tui-output.txt').write_bytes(history)
-print(json.dumps({'directRuleCreateAndEdit':True,'directFolderCreateCloneAndEdit':True,'fieldCancelVsFormCancel':True,'validationRetryKeepsDraft':True,'reviewCancelKeepsDraft':True,'disabledFieldsPreserveValues':True,'cloneRebasesExclusions':True,'smallFormScrolling':True,'singleRuleMoveAndFolderScope':True,'settingsSaveRetry':True,'evidence':str(root)},ensure_ascii=False))
+print(json.dumps({'recentDestinationSelection':True,'ruleNameSubfolderMove':True,'directRuleCreateAndEdit':True,'directFolderCreateCloneAndEdit':True,'fieldCancelVsFormCancel':True,'validationRetryKeepsDraft':True,'reviewCancelKeepsDraft':True,'disabledFieldsPreserveValues':True,'cloneRebasesExclusions':True,'smallFormScrolling':True,'singleRuleMoveAndFolderScope':True,'settingsSaveRetry':True,'evidence':str(root)},ensure_ascii=False))

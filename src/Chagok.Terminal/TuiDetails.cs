@@ -14,6 +14,9 @@ public static class TuiDetails
             : folder.ExcludedFolders.Select((path, i) => ($"제외 {i + 1}", path)).ToArray());
         Trigger(lines, width, folder.Trigger, folder.ProgramPath, folder.RunMode);
         Section(lines, width, "05 · 설정 식별자", ("폴더 ID", folder.Id.ToString()));
+        Section(lines, width, "06 · 최근 이동 위치", ("표시·기록", folder.UseRecentDestinations ? "켜짐 · 최근 10개" : "꺼짐"));
+        if (folder.UseRecentDestinations)
+            Section(lines, width, "최근 위치 목록", DestinationPaths.Recent(folder).Select((p, i) => ($"위치 {i + 1}", p)).ToArray());
         return lines;
     }
 
@@ -27,8 +30,10 @@ public static class TuiDetails
             ("단어 / 패턴", rule.Match == NameMatch.Any ? "사용하지 않음" : rule.Pattern),
             ("확장자", string.IsNullOrWhiteSpace(rule.Extensions) ? "전체" : rule.Extensions),
             ("하위 폴더 검사", rule.Recursive ? "포함" : "포함하지 않음"));
-        Section(lines, width, "03 · 이동 동작", ("이동할 폴더", rule.Destination),
-            ("대상 폴더 자동 생성", rule.CreateDestination ? "켜짐" : "꺼짐"),
+        Section(lines, width, "03 · 이동 동작", ("기본 이동 위치", rule.Destination),
+            ("규칙명 폴더 추가", rule.AppendRuleName ? "켜짐" : "꺼짐"),
+            ("최종 이동 폴더", DestinationPaths.Preview(rule)),
+            ("대상 폴더 자동 생성", DestinationPaths.CreatesDirectory(rule) ? "켜짐" : "꺼짐"),
             ("같은 이름의 파일", rule.Conflict switch
             { ConflictMode.Replace => "기존 파일을 휴지통으로 옮기고 교체", ConflictMode.Skip => "건너뛰기", _ => "번호를 붙여 이름 변경 후 이동" }));
         Trigger(lines, width, rule.Trigger, rule.ProgramPath, rule.RunMode);

@@ -811,6 +811,114 @@ Add("터미널 출력은 제어 문자를 제거하고 한글 표시 폭 제한"
     Assert(Chagok.Terminal.TerminalText.Fit("가나다", 4) == "가나");
 });
 
+Add("규칙명 폴더는 기본 위치와 분리하고 이름 변경에 따라 갱신", () =>
+{
+    using var f = new Fixture();
+    Assert(DestinationPaths.Resolve(f.Rule) == f.Target);
+    f.Rule.AppendRuleName = true; f.Rule.Name = "PDF 정리";
+    Assert(DestinationPaths.Resolve(f.Rule) == Path.Combine(f.Target, "PDF 정리"));
+    f.Rule.Name = "사진";
+    Assert(DestinationPaths.Resolve(f.Rule) == Path.Combine(f.Target, "사진") && f.Rule.Destination == f.Target);
+    var copy = Storage.Clone(f.Rule);
+    Assert(copy.AppendRuleName && DestinationPaths.Resolve(copy) == DestinationPaths.Resolve(f.Rule));
+    copy.AppendRuleName = false; Assert(DestinationPaths.Resolve(copy) == f.Target);
+});
+Add("규칙명 폴더의 경로 탈출·Windows 금지 이름 거부", () =>
+{
+    using var f = new Fixture(); f.Rule.AppendRuleName = true;
+    foreach (var name in new[] { "../outside", @"..\outside", "..", ".", "bad/name", "bad:name", "bad*", "end.", "CON", "nul.txt", "COM1.pdf", "LPT9", "LPT¹.txt", "CONOUT$", "bad\nname", new string('a', 256) })
+    { f.Rule.Name = name; Throws<ArgumentException>(() => PathSafety.ValidateRule(f.Folder, f.Rule)); }
+    f.Rule.Name = "COM10"; PathSafety.ValidateRule(f.Folder, f.Rule);
+    f.Rule.AppendRuleName = false; f.Rule.Name = "일반 규칙 / 설명"; PathSafety.ValidateRule(f.Folder, f.Rule);
+});
+Async("규칙명 폴더는 검사 때 생성하지 않고 실행 때 자동 생성", async () =>
+{
+    using var f = new Fixture(); f.Rule.AppendRuleName = true; f.Rule.CreateDestination = false;
+    f.Rule.Name = "문서"; f.Write("a.pdf", "contents");
+    var p = f.Scan(); var target = Path.Combine(f.Target, "문서", "a.pdf");
+    Assert(p.Entries.Single().Target == target && p.Entries[0].CanExecute && p.Entries[0].CreateDestination);
+    Assert(!Directory.Exists(f.Target));
+    var result = await f.Execute(p);
+    Assert(result.Status == "완료" && File.ReadAllText(target) == "contents" && !File.Exists(f.SourceFile("a.pdf")));
+});
+Add("규칙명 최종 폴더만 자동 제외하고 기존 파일 충돌도 판단", () =>
+{
+    using var f = new Fixture(); f.Rule.AppendRuleName = true; f.Rule.Recursive = true;
+    f.Rule.Destination = f.Source; f.Rule.Name = "sorted";
+    f.Write("top.pdf", "new"); f.Write("sorted/top.pdf", "old"); f.Write("other/next.pdf", "next");
+    using var disk = new Planner().ScanToDisk(f.Folder, [DestinationPaths.Resolve(f.Rule)], Path.Combine(f.Root, "cache"));
+    Assert(disk.Count == 2);
+    var rows = disk.ReadPage(0).Select(x => x.Entry).ToArray();
+    Assert(rows.Any(e => e.Target.EndsWith("top (1).pdf") && e.Action == PlanAction.Rename));
+    Assert(rows.All(e => !PathSafety.IsWithin(e.Source, DestinationPaths.Resolve(f.Rule))));
+    f.Rule.Name = "source"; f.Rule.Destination = f.Root;
+    Throws<ArgumentException>(() => PathSafety.ValidateRule(f.Folder, f.Rule));
+});
+Add("최근 이동 위치는 폴더별 10개·중복 제거·꺼짐 기록 중단", () =>
+{
+    using var f = new Fixture(); var folder = f.Folder; var other = new FolderSpec();
+    DestinationPaths.Remember(folder, f.Rule); Assert(folder.RecentDestinations.Count == 0);
+    folder.UseRecentDestinations = true;
+    for (var i = 0; i < 12; i++) { f.Rule.Destination = Path.Combine(f.Root, i.ToString()); DestinationPaths.Remember(folder, f.Rule); }
+    Assert(folder.RecentDestinations.Count == 10 && folder.RecentDestinations[0] == Path.Combine(f.Root, "11"));
+    f.Rule.Destination = Path.Combine(f.Root, "5"); f.Rule.AppendRuleName = true;
+    DestinationPaths.Remember(folder, f.Rule);
+    Assert(folder.RecentDestinations.Count == 10 && folder.RecentDestinations[0] == f.Rule.Destination);
+    Assert(other.RecentDestinations.Count == 0);
+    var before = folder.RecentDestinations.ToArray(); folder.UseRecentDestinations = false;
+    f.Rule.Destination = f.Target; DestinationPaths.Remember(folder, f.Rule);
+    Assert(DestinationPaths.Recent(folder).Count == 0 && before.SequenceEqual(folder.RecentDestinations));
+    folder.UseRecentDestinations = true; Assert(DestinationPaths.Recent(folder).Count == 10);
+});
+Add("최근 위치·규칙 옵션 저장 실패 시 공유 설정 보존", () =>
+{
+    using var f = new Fixture(); f.Folder.UseRecentDestinations = true;
+    var storage = new Storage(Path.Combine(f.Root, "data"));
+    var settings = new AppSettings { Folders = [f.Folder] }; storage.Save(settings);
+    var session = new Chagok.Terminal.TerminalSession(storage, settings);
+    var before = File.ReadAllText(storage.SettingsPath);
+    var rule = Storage.Clone(f.Rule); rule.AppendRuleName = true;
+    Directory.CreateDirectory(storage.SettingsPath + ".tmp");
+    Throws<UnauthorizedAccessException>(() => session.PutRule(f.Folder.Id, rule));
+    Assert(File.ReadAllText(storage.SettingsPath) == before && session.Settings.Folders[0].RecentDestinations.Count == 0);
+    Assert(!session.Settings.Folders[0].Rules[0].AppendRuleName);
+    Directory.Delete(storage.SettingsPath + ".tmp"); session.PutRule(f.Folder.Id, rule);
+    var loaded = storage.Load().Folders[0];
+    Assert(loaded.Rules[0].AppendRuleName && loaded.RecentDestinations.SequenceEqual(new[] { f.Target }));
+});
+Add("이전 설정은 새 이동 옵션 기본 꺼짐으로 로드", () =>
+{
+    using var f = new Fixture(); var storage = new Storage(Path.Combine(f.Root, "data"));
+    Directory.CreateDirectory(storage.DirectoryPath);
+    File.WriteAllText(storage.SettingsPath, "{\"Version\":1,\"Folders\":[{\"Name\":\"old\",\"Path\":\"/old\",\"Rules\":[{\"Name\":\"old-rule\",\"Destination\":\"/target\"}]}]}");
+    var folder = storage.Load().Folders.Single();
+    Assert(!folder.UseRecentDestinations && folder.RecentDestinations.Count == 0 && !folder.Rules[0].AppendRuleName);
+});
+
+Add("새 규칙의 최근 위치 기본값은 옵션·명시 목적지 우선순위를 따름", () =>
+{
+    using var f = new Fixture(); f.Folder.RecentDestinations = [f.Target, f.Source];
+    Assert(DestinationPaths.Initial(f.Folder) == "");
+    f.Folder.UseRecentDestinations = true;
+    Assert(DestinationPaths.Initial(f.Folder) == f.Target);
+    Assert(DestinationPaths.Initial(f.Folder, f.Source) == f.Source);
+    Assert(DestinationPaths.Initial(f.Folder, "") == "");
+    var before = System.Text.Json.JsonSerializer.Serialize(f.Folder);
+    _ = DestinationPaths.Initial(f.Folder);
+    Assert(System.Text.Json.JsonSerializer.Serialize(f.Folder) == before);
+});
+Add("TUI 항목 설명은 규칙명·자동 생성·최근 위치와 연동 이유를 제공", () =>
+{
+    var folder = new FolderSpec();
+    var off = Chagok.Terminal.TuiFieldHelp.RuleDisabled(13, folder);
+    folder.UseRecentDestinations = true;
+    var empty = Chagok.Terminal.TuiFieldHelp.RuleDisabled(13, folder);
+    Assert(off.Contains("검사 폴더 설정") && empty.Contains("아직 최근 위치가 없습니다"));
+    Assert(Chagok.Terminal.TuiFieldHelp.RuleDisabled(7, folder).Contains("자동 생성이 적용"));
+    Assert(Chagok.Terminal.TuiFieldHelp.Rule(0).Contains("최종 이동 폴더"));
+    Assert(Chagok.Terminal.TuiFieldHelp.Folder(6).Contains("새 규칙") && Chagok.Terminal.TuiFieldHelp.Folder(6).Contains("기존 기록"));
+});
+
 var failures = 0;
 Add("통합 EXE는 GUI·탐색기와 터미널 명령을 분리", () =>
 {
@@ -991,7 +1099,7 @@ sealed class Fixture : IDisposable
     {
         var path = SourceFile(name); Directory.CreateDirectory(Path.GetDirectoryName(path)!); File.WriteAllText(path, contents);
     }
-    public ScanPlan Scan() => new Planner().Scan(Folder, [Rule.Destination]);
+    public ScanPlan Scan() => new Planner().Scan(Folder, [DestinationPaths.Resolve(Rule)]);
     public Task<OperationResult> Execute(ScanPlan plan, IRecycleBin? bin = null)
         => new Executor(bin ?? new TestBin(Root)).ExecuteAsync(plan, plan.Entries.Single());
     public void Dispose()

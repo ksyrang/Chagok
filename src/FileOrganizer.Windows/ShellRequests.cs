@@ -56,7 +56,7 @@ public partial class MainWindow
             if (folder is null) return;
             var editor = new RuleEditor(this, folder, null, start.Destination);
             if (editor.ShowDialog() != true || editor.Result is not { } rule) return;
-            if (Commit(() => { folder.Rules.Add(rule); selectedFolderId = folder.Id; }))
+            if (Commit(() => { folder.Rules.Add(rule); DestinationPaths.Remember(folder, rule); selectedFolderId = folder.Id; }))
             { RefreshFolders(); ShowView(RulesView); SetStatus("탐색기에서 요청한 이동 규칙을 저장했습니다. 파일은 이동하지 않았습니다."); }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)

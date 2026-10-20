@@ -37,7 +37,7 @@ public static class Dashboard
         lines.Add(Row("검사 위치  " + (folder?.Path ?? "F: 새 폴더 추가"), width));
         lines.Add(Row("선택 규칙  " + (rule?.Name ?? "없음"), width));
         lines.Add(Row("조건       " + (rule is null ? "—" : MatchLabel(rule) + " · 확장자 " + (rule.Extensions.Length == 0 ? "전체" : rule.Extensions)), width));
-        lines.Add(Row("이동       " + (rule?.Destination ?? "—"), width));
+        lines.Add(Row("이동       " + (rule is null ? "—" : DestinationPaths.Preview(rule)), width));
         lines.Add(Bottom(width));
         lines.Add("[R 이 규칙만 검사 및 실행]  ·  이동 전 목록 확인");
         lines.Add("[A 폴더 전체 검사 및 실행]  [E 편집]");

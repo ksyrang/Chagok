@@ -55,7 +55,7 @@ public static class PathSafety
     {
         if (string.IsNullOrWhiteSpace(rule.Name)) throw new ArgumentException("규칙 이름을 입력하세요.");
         var source = Normalize(folder.Path);
-        var target = Normalize(rule.Destination);
+        var target = DestinationPaths.Resolve(rule);
         if (Comparer.Equals(source, target)) throw new ArgumentException("검사 폴더와 이동 폴더가 같습니다.");
         AssertNoLinks(source);
         AssertNoLinks(target);

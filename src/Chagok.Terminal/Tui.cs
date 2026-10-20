@@ -183,15 +183,23 @@ internal sealed class Tui(TerminalSession session, IRecycleBin recycle, Cancella
             new("감지할 .exe 전체 경로", "04 · 실행 조건", () => folder.ProgramPath, value => folder.ProgramPath = value, Enabled: () => folder.Trigger != TriggerMode.Manual),
             TuiForm.Choice("감지 후 처리", "04 · 실행 조건", () => folder.RunMode, value => folder.RunMode = value,
                 ["목록 확인 후 실행", "자동 실행"], () => folder.Trigger != TriggerMode.Manual),
+            TuiForm.Toggle("최근 이동 위치 표시·기록", "05 · 규칙 입력", () => folder.UseRecentDestinations, value => folder.UseRecentDestinations = value),
         };
+        fields = fields.Select((field, index) => field with
+        {
+            Description = () => TuiFieldHelp.Folder(index),
+            DisabledReason = () => "실행 조건이 수동이므로 적용하지 않습니다. 프로그램 조건으로 바꾸면 다시 사용하며 기존 값은 유지합니다."
+        }).ToArray();
         return form.Run(fields, duplicate ? "이동 목적지는 원본과 같습니다. 폴더 설정과 규칙을 복제할까요?" : "폴더 설정을 저장할까요?",
             width => TuiDetails.FolderLines(folder, width), () => session.PutFolder(folder), original is null ? "folders add" : "folders update") ? folder.Id : null;
     }
 
     private Guid? EditRule(FolderSpec folder, RuleSpec? original)
     {
-        var rule = original is null ? new RuleSpec { Match = NameMatch.Any } : Storage.Clone(original);
+        var rule = original is null ? new RuleSpec { Match = NameMatch.Any, Destination = DestinationPaths.Initial(folder) } : Storage.Clone(original);
         var form = new TuiForm(original is null ? "규칙 추가" : "규칙 편집", () => (folder.Name, folder.Path), token);
+        var recent = DestinationPaths.Recent(folder);
+        var recentIndex = -1;
         var fields = new TuiForm.Field[]
         {
             new("규칙 이름", "01 · 기본 정보", () => rule.Name, value => rule.Name = value),
@@ -201,13 +209,28 @@ internal sealed class Tui(TerminalSession session, IRecycleBin recycle, Cancella
             new("단어 또는 패턴", "02 · 파일 조건", () => rule.Pattern, value => rule.Pattern = value, Enabled: () => rule.Match != NameMatch.Any),
             new("확장자 (.pdf,.jpg)", "02 · 파일 조건", () => rule.Extensions, value => rule.Extensions = value),
             new("이동할 폴더 전체 경로", "03 · 이동 동작", () => rule.Destination, value => rule.Destination = value),
-            TuiForm.Toggle("대상 폴더 자동 생성", "03 · 이동 동작", () => rule.CreateDestination, value => rule.CreateDestination = value),
+            TuiForm.Toggle("대상 폴더 자동 생성", "03 · 이동 동작", () => DestinationPaths.CreatesDirectory(rule), value => rule.CreateDestination = value)
+                with { Enabled = () => !rule.AppendRuleName },
             TuiForm.Choice("같은 이름의 파일", "03 · 이동 동작", () => rule.Conflict, value => rule.Conflict = value, ["번호 추가", "휴지통으로 보내고 교체", "건너뛰기"]),
             TuiForm.Choice("실행 조건", "04 · 실행 조건", () => rule.Trigger, value => rule.Trigger = value, ["수동", "프로그램 시작", "프로그램 종료"]),
             new("감지할 .exe 전체 경로", "04 · 실행 조건", () => rule.ProgramPath, value => rule.ProgramPath = value, Enabled: () => rule.Trigger != TriggerMode.Manual),
             TuiForm.Choice("감지 후 처리", "04 · 실행 조건", () => rule.RunMode, value => rule.RunMode = value,
                 ["목록 확인 후 실행", "자동 실행"], () => rule.Trigger != TriggerMode.Manual),
+            TuiForm.Toggle("규칙명 폴더 사용", "05 · 이동 위치 도우미", () => rule.AppendRuleName, value => rule.AppendRuleName = value),
+            new("최근 사용한 이동 위치", "05 · 이동 위치 도우미", () => recentIndex < 0 ? "←→로 선택 (기본 위치에 적용)" : recent[recentIndex],
+                Change: direction =>
+                {
+                    recentIndex = recentIndex < 0 ? 0 : (recentIndex + direction + recent.Count) % recent.Count;
+                    rule.Destination = recent[recentIndex];
+                }, Enabled: () => recent.Count > 0),
+            new("최종 이동 폴더", "05 · 이동 위치 도우미", () => DestinationPaths.Preview(rule)),
         };
+        fields = fields.Select((field, index) => field with
+        {
+            Description = () => TuiFieldHelp.Rule(index),
+            DisabledReason = () => TuiFieldHelp.RuleDisabled(index, folder),
+            DisabledValue = () => index == 7 ? "켜짐 · 자동 적용" : "사용 안 함"
+        }).ToArray();
         return form.Run(fields, "위 검사 폴더에 규칙을 저장할까요?", width => TuiDetails.RuleLines(folder, rule, width),
             () => session.PutRule(folder.Id, rule), original is null ? "rules add" : "rules update") ? rule.Id : null;
     }

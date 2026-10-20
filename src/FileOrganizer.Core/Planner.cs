@@ -77,7 +77,7 @@ public sealed class Planner
         PlanEntry PlanFile(string path, RuleSpec rule)
         {
             var stamp = FileStamp.Read(path);
-            var destination = PathSafety.Normalize(rule.Destination);
+            var destination = DestinationPaths.Resolve(rule);
             var target = System.IO.Path.Combine(destination, System.IO.Path.GetFileName(path));
             var action = PlanAction.Move;
             var reason = "파일명·확장자 조건 일치";
@@ -90,7 +90,7 @@ public sealed class Planner
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             { return Entry(PlanAction.Blocked, "파일이 사용 중이거나 읽기 권한이 없습니다. " + ex.Message); }
-            if (!rule.CreateDestination && !Directory.Exists(destination))
+            if (!DestinationPaths.CreatesDirectory(rule) && !Directory.Exists(destination))
                 return Entry(PlanAction.Blocked, "이동 폴더가 없습니다. 자동 생성이 꺼져 있습니다.");
             if (Directory.Exists(target)) return Entry(PlanAction.Blocked, "대상 위치에 같은 이름의 폴더가 있습니다.");
             if (File.Exists(target) || sink.IsReserved(target))
@@ -118,7 +118,7 @@ public sealed class Planner
             return Entry(action, reason);
 
             PlanEntry Entry(PlanAction kind, string explanation) => new(Guid.NewGuid(), path, target,
-                rule.Name, kind, explanation, stamp, targetStamp, rule.CreateDestination);
+                rule.Name, kind, explanation, stamp, targetStamp, DestinationPaths.CreatesDirectory(rule));
         }
     }
 

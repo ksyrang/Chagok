@@ -18,7 +18,8 @@ public sealed class Storage(string directory)
         if (settings.Version != 1 || settings.Folders is null || !Enum.IsDefined(settings.Theme)
             || !Enum.IsDefined(settings.CloseAction)
             || settings.Folders.Any(f => f is null || f.Rules is null || f.ExcludedFolders is null
-                || f.Name is null || f.Path is null || f.ProgramPath is null
+                || f.Name is null || f.Path is null || f.ProgramPath is null || f.RecentDestinations is null
+                || f.RecentDestinations.Any(p => p is null)
                 || !Enum.IsDefined(f.Trigger) || !Enum.IsDefined(f.RunMode) || f.ExcludedFolders.Any(p => p is null)
                 || f.Rules.Any(r => r is null || r.Name is null || r.Pattern is null || r.Extensions is null
                     || r.Destination is null || r.ProgramPath is null || !Enum.IsDefined(r.Match)

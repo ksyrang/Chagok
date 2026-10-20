@@ -298,7 +298,10 @@ public partial class MainWindow : Window
                 var index = original is null ? -1 : folder.Rules.FindIndex(r => r.Id == original.Id);
                 if (index >= 0) folder.Rules.RemoveAt(index);
                 if (!editor.DeleteRequested && editor.Result is { } result)
+                {
                     folder.Rules.Insert(index < 0 ? folder.Rules.Count : index, result);
+                    DestinationPaths.Remember(folder, result);
+                }
             })) { RefreshRules(); SetStatus("규칙을 저장했습니다."); }
         }
         finally { modal = false; PumpPending(); }
@@ -346,7 +349,7 @@ public partial class MainWindow : Window
             var copy = Storage.Clone(folder);
             if (PathSafety.IsWithin(copy.Path, storage.DirectoryPath))
                 throw new ArgumentException("차곡 데이터 저장소는 검사 폴더로 사용할 수 없습니다.");
-            var destinations = settings.Folders.SelectMany(f => f.Rules).Select(r => r.Destination).Where(p => !string.IsNullOrWhiteSpace(p))
+            var destinations = settings.Folders.SelectMany(f => f.Rules).Select(DestinationPaths.Resolve).Where(p => !string.IsNullOrWhiteSpace(p))
                 .Append(storage.DirectoryPath).ToArray();
             var token = workCancellation!.Token;
             scanned = await Task.Run(() => new Planner().ScanToDisk(copy, destinations,

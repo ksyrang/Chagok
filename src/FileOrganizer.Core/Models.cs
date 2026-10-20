@@ -35,6 +35,8 @@ public sealed class FolderSpec
     public string ProgramPath { get; set; } = "";
     public RunMode RunMode { get; set; } = RunMode.Confirm;
     public List<string> ExcludedFolders { get; set; } = [];
+    public bool UseRecentDestinations { get; set; }
+    public List<string> RecentDestinations { get; set; } = [];
     public List<RuleSpec> Rules { get; set; } = [];
 }
 
@@ -48,6 +50,7 @@ public sealed class RuleSpec
     public string Pattern { get; set; } = "";
     public string Extensions { get; set; } = "";
     public string Destination { get; set; } = "";
+    public bool AppendRuleName { get; set; }
     public bool CreateDestination { get; set; } = true;
     public ConflictMode Conflict { get; set; } = ConflictMode.Rename;
     public TriggerMode Trigger { get; set; } = TriggerMode.Manual;

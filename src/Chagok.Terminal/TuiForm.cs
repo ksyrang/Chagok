@@ -3,7 +3,12 @@ namespace Chagok.Terminal;
 internal sealed class TuiForm(string title, Func<(string Name, string Path)> context, CancellationToken token)
 {
     internal sealed record Field(string Label, string Section, Func<string> Value, Action<string>? Set = null,
-        Action<int>? Change = null, Func<bool>? Enabled = null);
+        Action<int>? Change = null, Func<bool>? Enabled = null, Func<string>? Description = null,
+        Func<string>? DisabledReason = null, Func<string>? DisabledValue = null);
+
+    private static string Explanation(Field field) => (field.Enabled?.Invoke() == false
+        ? (field.DisabledReason?.Invoke() ?? "현재 조건에서는 사용하지 않습니다. 기존 값은 유지합니다.") + " " : "")
+        + (field.Description?.Invoke() ?? "Enter로 값을 수정하고 I로 전체 값을 확인합니다.");
 
     internal static Field Choice<T>(string label, string section, Func<T> read, Action<T> write, string[] labels, Func<bool>? enabled = null) where T : struct, Enum
         => new(label, section, () => labels[Convert.ToInt32(read())], Change: direction =>
@@ -21,7 +26,7 @@ internal sealed class TuiForm(string title, Func<(string Name, string Path)> con
         {
             var width = Math.Min(100, TerminalText.Width);
             var rows = Header(width);
-            var count = Math.Max(1, TerminalText.Height - rows.Count - 10);
+            var count = Math.Max(1, TerminalText.Height - rows.Count - 11);
             if (selected < first) first = selected;
             if (selected >= first + count) first = selected - count + 1;
             first = Math.Clamp(first, 0, Math.Max(0, fields.Count - count));
@@ -31,16 +36,16 @@ internal sealed class TuiForm(string title, Func<(string Name, string Path)> con
             {
                 if (i >= fields.Count) { rows.Add(Dashboard.Row("", width)); continue; }
                 var field = fields[i];
-                var value = field.Enabled?.Invoke() == false ? "사용 안 함" : field.Value();
+                var value = field.Enabled?.Invoke() == false ? field.DisabledValue?.Invoke() ?? "사용 안 함" : field.Value();
                 rows.Add(Dashboard.Row((i == selected ? "> " : "  ") + Dashboard.Pad($"{i + 1}. {field.Label}", Math.Min(30, width / 2))
                     + "  " + (value.Length == 0 ? "미입력" : value), width));
             }
             rows.Add(Dashboard.Bottom(width));
             rows.Add(Dashboard.Top("선택 항목 · " + fields[selected].Label, width));
-            var text = fields[selected].Enabled?.Invoke() == false ? "현재 조건에서는 사용하지 않습니다. 기존 값은 유지합니다." : fields[selected].Value();
-            var details = TuiDetails.Wrap(text.Length == 0 ? "미입력 · Enter로 입력하세요." : text, width - 4).Take(2).ToArray();
+            var details = TuiDetails.Wrap(Explanation(fields[selected]), width - 4).ToArray();
             rows.Add(Dashboard.Row(details.ElementAtOrDefault(0) ?? "", width));
             rows.Add(Dashboard.Row(details.ElementAtOrDefault(1) ?? "", width));
+            rows.Add(Dashboard.Row(details.Length > 3 ? "… I: 전체 값과 설명 보기" : details.ElementAtOrDefault(2) ?? "", width));
             rows.Add(Dashboard.Bottom(width));
             rows.Add("↑↓/Tab 선택 · 1~9 바로 선택 · Home/End 처음/끝");
             rows.Add("Enter/E 편집 · ←→ 값 변경 · I 전체 값 보기");
@@ -65,13 +70,14 @@ internal sealed class TuiForm(string title, Func<(string Name, string Path)> con
                         { fieldToEdit.Change(input.Key == ConsoleKey.LeftArrow ? -1 : 1); status = "수정 중 · S 검토·저장 전에는 적용되지 않습니다."; }
                         break;
                     case ConsoleKey.Enter or ConsoleKey.E or ConsoleKey.Spacebar:
-                        if (fieldToEdit.Enabled?.Invoke() == false) { status = "현재 조건에서는 이 항목을 사용하지 않습니다."; break; }
+                        if (fieldToEdit.Enabled?.Invoke() == false) { status = fieldToEdit.DisabledReason?.Invoke() ?? "현재 조건에서는 이 항목을 사용하지 않습니다."; break; }
                         if (fieldToEdit.Change is not null) fieldToEdit.Change(1);
                         else if (fieldToEdit.Set is not null)
                         {
                             try { fieldToEdit.Set(Edit(fieldToEdit)); }
                             catch (FormCanceledException) { status = "항목 편집 취소 · 기존 값을 유지했습니다."; break; }
                         }
+                        else { ShowValue(fieldToEdit); break; }
                         status = "수정 중 · S 검토·저장 전에는 적용되지 않습니다.";
                         break;
                     case ConsoleKey.S:
@@ -109,7 +115,8 @@ internal sealed class TuiForm(string title, Func<(string Name, string Path)> con
         while (true)
         {
             var width = Math.Min(100, TerminalText.Width);
-            var values = TuiDetails.Wrap(field.Value().Length == 0 ? "미입력" : field.Value(), width - 4).ToArray();
+            var values = TuiDetails.Wrap("현재 값: " + (field.Value().Length == 0 ? "미입력" : field.Value()), width - 4)
+                .Concat(new[] { "", "기능과 연계 항목" }).Concat(TuiDetails.Wrap(Explanation(field), width - 4)).ToArray();
             var count = Math.Max(1, TerminalText.Height - 6);
             offset = Math.Clamp(offset, 0, Math.Max(0, values.Length - count));
             var rows = new List<string> { Dashboard.Top("전체 값 · " + field.Label, width) };

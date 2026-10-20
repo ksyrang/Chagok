@@ -10,8 +10,8 @@ public sealed record CommandHelp(string Name, string Title, string Description, 
 
 public static class HelpCatalog
 {
-    public const string Version = "0.5.6";
-    public const string Executable = "Chagok-v0.5.6.exe";
+    public const string Version = "0.5.8";
+    public const string Executable = "Chagok-v0.5.8.exe";
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
     private static OptionHelp O(string name, string description, bool required = false, string type = "string", string? fallback = null, params string[] choices)
@@ -24,7 +24,8 @@ public static class HelpCatalog
         O("program", "start/stop 조건의 실제 .exe 전체 경로. 해당 조건을 저장하려면 파일이 있어야 합니다.", type: "absolutePath"),
         O("mode", "감지 후 목록 확인 또는 자동 실행. auto는 파일을 확인 없이 이동할 수 있습니다.", false, "enum", null, "confirm", "auto")];
     private static readonly OptionHelp[] FolderFields = [O("name", "표시 이름"), O("path", "존재하는 검사 폴더의 전체 경로. 다른 검사 폴더와 겹칠 수 없습니다.", type: "absolutePath"),
-        O("exclude", "제외할 하위 폴더 전체 경로를 세미콜론으로 구분합니다.", type: "pathList"), ..Trigger];
+        O("exclude", "제외할 하위 폴더 전체 경로를 세미콜론으로 구분합니다.", type: "pathList"),
+        O("recent-destinations", "폴더별 최근 기본 이동 위치 표시·기록. 기본 꺼짐, 규칙 저장 시 최근 10개. 끄면 기존 기록은 유지합니다.", false, "boolean", null, "on", "off", "true", "false"), ..Trigger];
     private static readonly OptionHelp[] RuleFields = [O("name", "규칙 이름"), O("destination", "이동할 폴더의 전체 경로", type: "absolutePath"),
         O("match", "파일명 비교 방식", false, "enum", null, "any", "contains", "starts", "glob"),
         O("pattern", "contains/starts/glob에서 필수인 단어 또는 와일드카드 패턴"),
@@ -32,6 +33,7 @@ public static class HelpCatalog
         O("recursive", "하위 폴더 포함", false, "boolean", null, "on", "off", "true", "false"),
         O("conflict", "이름 충돌 처리. replace는 기존 대상을 휴지통으로 보낸 뒤 교체합니다.", false, "enum", null, "rename", "replace", "skip"),
         O("create", "목적지 폴더 자동 생성", false, "boolean", null, "on", "off", "true", "false"),
+        O("append-rule-name", "선택한 기본 이동 위치 뒤에 규칙명 폴더를 추가하고 실행 때 자동 생성. 기본 꺼짐. 규칙명을 바꾸면 최종 위치도 바뀝니다.", false, "boolean", null, "on", "off", "true", "false"),
         O("enabled", "규칙 사용 여부", false, "boolean", null, "on", "off", "true", "false"), ..Trigger];
     public static IReadOnlyList<OptionHelp> CommonOptions { get; } = Array.AsReadOnly(new[] {
         O("json", "결과를 JSON으로 출력합니다. TUI에서는 사용할 수 없습니다. watch는 NDJSON입니다.", type: "flag", fallback: "false"),

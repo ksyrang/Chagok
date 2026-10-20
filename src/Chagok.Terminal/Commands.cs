@@ -24,12 +24,13 @@ public sealed class Commands(TerminalSession session, IRecycleBin recycle, Cance
             case "folders list": args.Allow(); Write(session.Settings.Folders.Select(f => new { f.Id, f.Name, f.Path, Rules = f.Rules.Count, f.Trigger, f.ProgramPath, f.RunMode }), args); break;
             case "folders add": case "folders update": case "folders clone":
             {
-                args.Allow("folder", "name", "path", "exclude", "trigger", "program", "mode");
+                args.Allow("folder", "name", "path", "exclude", "trigger", "program", "mode", "recent-destinations");
                 var folder = route == "folders add" ? new FolderSpec() : Storage.Clone(session.Folder(args.Require("folder")));
                 var oldPath = folder.Path;
                 if (route == "folders clone") { folder = FolderDuplicator.Create(folder); _ = args.Require("name"); _ = args.Require("path"); }
                 if (route == "folders add") { _ = args.Require("name"); _ = args.Require("path"); }
                 folder.Name = args.Get("name") ?? folder.Name; folder.Path = args.Get("path") ?? folder.Path;
+                folder.UseRecentDestinations = args.Boolean("recent-destinations", folder.UseRecentDestinations);
                 folder.ExcludedFolders = args.Get("exclude") is { } excluded ? SplitPaths(excluded)
                     : oldPath.Length > 0 && !PathSafety.Comparer.Equals(oldPath, folder.Path)
                         ? FolderDuplicator.RebaseExclusions(oldPath, folder.Path, folder.ExcludedFolders) : folder.ExcludedFolders;
@@ -45,7 +46,7 @@ public sealed class Commands(TerminalSession session, IRecycleBin recycle, Cance
             case "rules list": args.Allow("folder"); Write(session.Folder(args.Require("folder")).Rules, args); break;
             case "rules add": case "rules update":
             {
-                args.Allow("folder", "rule", "name", "destination", "match", "pattern", "extensions", "recursive", "conflict", "create", "enabled", "trigger", "program", "mode");
+                args.Allow("folder", "rule", "name", "destination", "match", "pattern", "extensions", "recursive", "conflict", "create", "enabled", "trigger", "program", "mode", "append-rule-name");
                 var folder = session.Folder(args.Require("folder"));
                 var rule = route == "rules add" ? new RuleSpec() : Storage.Clone(TerminalSession.Rule(folder, args.Require("rule")));
                 if (route == "rules add") { _ = args.Require("name"); _ = args.Require("destination"); _ = args.Require("match"); }
@@ -55,6 +56,7 @@ public sealed class Commands(TerminalSession session, IRecycleBin recycle, Cance
                 if (args.Get("conflict") is { } conflict) rule.Conflict = Choice(conflict, new Dictionary<string, ConflictMode> { ["rename"] = ConflictMode.Rename, ["replace"] = ConflictMode.Replace, ["skip"] = ConflictMode.Skip });
                 rule.Enabled = args.Boolean("enabled", rule.Enabled); rule.Recursive = args.Boolean("recursive", rule.Recursive);
                 rule.CreateDestination = args.Boolean("create", rule.CreateDestination);
+                rule.AppendRuleName = args.Boolean("append-rule-name", rule.AppendRuleName);
                 var trigger = new FolderSpec { Trigger = rule.Trigger, ProgramPath = rule.ProgramPath, RunMode = rule.RunMode };
                 ApplyTrigger(args, trigger); rule.Trigger = trigger.Trigger; rule.ProgramPath = trigger.ProgramPath; rule.RunMode = trigger.RunMode;
                 session.PutRule(folder.Id, rule); Write(rule, args); break;

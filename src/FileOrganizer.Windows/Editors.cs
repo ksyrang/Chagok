@@ -72,7 +72,7 @@ internal sealed class RuleEditor : Window
         SetResourceReference(StyleProperty, typeof(Window));
         Width = 640; Height = Math.Min(760, SystemParameters.WorkArea.Height); MinWidth = 520; MinHeight = 580;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        var rule = original is null ? new RuleSpec { Destination = destinationPreset ?? "" } : Storage.Clone(original);
+        var rule = original is null ? new RuleSpec { Destination = DestinationPaths.Initial(folder, destinationPreset) } : Storage.Clone(original);
         var shell = new DockPanel { Margin = new(24) };
         var actions = new DockPanel { Margin = new(0, 18, 0, 0) };
         DockPanel.SetDock(actions, Dock.Bottom);
@@ -88,6 +88,8 @@ internal sealed class RuleEditor : Window
         EditorUi.Hint(form, $"{folder.Name} 폴더에 적용합니다. 규칙은 목록 위에서부터 판단하며 한 파일은 첫 일치 규칙으로 처리합니다.");
         var name = EditorUi.Input(rule.Name);
         EditorUi.Field(form, "규칙 이름", name);
+        var appendName = EditorUi.Check("규칙명 폴더 사용", rule.AppendRuleName);
+        form.Children.Add(appendName);
         var enabled = EditorUi.Check("규칙 사용", rule.Enabled);
         var recursive = EditorUi.Check("하위 폴더도 검사", rule.Recursive);
         form.Children.Add(enabled); form.Children.Add(recursive);
@@ -102,17 +104,66 @@ internal sealed class RuleEditor : Window
         EditorUi.Field(form, "확장자 (.pdf, .jpg처럼 구분 / 비우면 전체)", extensions);
         EditorUi.Hint(form, "파일명 조건과 확장자 조건을 모두 만족하는 파일을 찾습니다. 파일 내용은 검색하지 않습니다.");
         form.Children.Add(EditorUi.Heading("동작"));
+        var baseDestination = EditorUi.Input(rule.Destination);
         var destination = EditorUi.Input(rule.Destination);
         var destinationRow = EditorUi.Browse(destination, (_, _) =>
         {
-            var selected = EditorUi.SelectFolder(this, "이동할 폴더 선택", destination.Text);
-            if (selected is not null) destination.Text = selected;
+            var selected = EditorUi.SelectFolder(this, "이동할 폴더 선택", baseDestination.Text);
+            if (selected is not null) baseDestination.Text = selected;
         });
         form.Children.Add(new TextBlock { Text = "이동할 폴더", FontSize = 12, Margin = new(0, 0, 0, 6) });
         AutomationProperties.SetName(destination, "이동할 폴더");
         form.Children.Add(destinationRow);
+        var baseFields = new StackPanel();
+        EditorUi.Field(baseFields, "기본 위치 (이 아래에 규칙명 폴더가 붙습니다)", baseDestination);
+        form.Children.Add(baseFields);
+        if (folder.UseRecentDestinations)
+        {
+            var recent = new ComboBox { ItemsSource = DestinationPaths.Recent(folder), Margin = new(0, 0, 0, 12) };
+            EditorUi.Field(form, "최근 사용한 이동 위치 (이 검사 폴더)", recent);
+            recent.SelectionChanged += (_, _) =>
+            {
+                if (recent.SelectedItem is string path) baseDestination.Text = path;
+            };
+            if (recent.Items.Count == 0) EditorUi.Hint(form, "규칙을 저장하면 최근 이동 위치가 여기에 표시됩니다.");
+        }
+        var finalPath = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 12, Margin = new(0, 0, 0, 12) };
+        finalPath.SetResourceReference(TextBlock.ForegroundProperty, "SubBrush");
+        AutomationProperties.SetName(finalPath, "최종 이동 폴더");
+        form.Children.Add(finalPath);
         var create = EditorUi.Check("대상 폴더가 없으면 자동 생성", rule.CreateDestination);
         form.Children.Add(create);
+        var createChoice = rule.CreateDestination;
+        create.Checked += (_, _) => { if (create.IsEnabled) createChoice = true; };
+        create.Unchecked += (_, _) => { if (create.IsEnabled) createChoice = false; };
+        var updatingDestination = false;
+        void UpdateDestination()
+        {
+            if (updatingDestination) return;
+            updatingDestination = true;
+            var append = appendName.IsChecked == true;
+            var resolved = DestinationPaths.Preview(new RuleSpec
+                { Name = name.Text, Destination = baseDestination.Text, AppendRuleName = append });
+            destination.IsReadOnly = append;
+            destination.Text = append ? resolved : baseDestination.Text;
+            destination.ToolTip = destination.Text;
+            baseFields.Visibility = append ? Visibility.Visible : Visibility.Collapsed;
+            finalPath.Text = "최종 이동 폴더: " + resolved;
+            create.IsEnabled = false;
+            create.IsChecked = append || createChoice;
+            create.IsEnabled = !append;
+            updatingDestination = false;
+        }
+        name.TextChanged += (_, _) => UpdateDestination();
+        baseDestination.TextChanged += (_, _) => UpdateDestination();
+        destination.TextChanged += (_, _) =>
+        {
+            if (!updatingDestination && appendName.IsChecked != true) baseDestination.Text = destination.Text;
+        };
+        appendName.Checked += (_, _) => UpdateDestination();
+        appendName.Unchecked += (_, _) => UpdateDestination();
+        UpdateDestination();
+        EditorUi.Hint(form, "규칙명 폴더 옵션을 켜면 최종 폴더가 없을 때 실행 중 자동으로 생성합니다. 폴더 선택은 기본 위치를 바꿉니다.");
         var conflict = EditorUi.Select(["이름 변경 후 이동", "기존 파일을 휴지통으로 옮기고 교체", "건너뛰기"], (int)rule.Conflict);
         EditorUi.Field(form, "이동 위치에 같은 이름이 있을 때", conflict);
         EditorUi.Hint(form, "같은 이름의 파일만 판단합니다. 파일 내용이 같은지는 비교하지 않습니다. 휴지통 이동이 실패하면 교체를 중단합니다.");
@@ -152,8 +203,9 @@ internal sealed class RuleEditor : Window
                 rule.Name = name.Text.Trim(); rule.Enabled = enabled.IsChecked == true;
                 rule.Recursive = recursive.IsChecked == true; rule.Match = (NameMatch)match.SelectedIndex;
                 rule.Pattern = pattern.Text.Trim(); rule.Extensions = extensions.Text.Trim();
-                rule.Destination = PathSafety.Normalize(destination.Text.Trim());
-                rule.CreateDestination = create.IsChecked == true; rule.Conflict = (ConflictMode)conflict.SelectedIndex;
+                rule.Destination = PathSafety.Normalize(baseDestination.Text.Trim());
+                rule.AppendRuleName = appendName.IsChecked == true;
+                rule.CreateDestination = createChoice; rule.Conflict = (ConflictMode)conflict.SelectedIndex;
                 rule.Trigger = (TriggerMode)trigger.SelectedIndex; rule.ProgramPath = program.Text.Trim();
                 rule.RunMode = (RunMode)mode.SelectedIndex;
                 PathSafety.ValidateRule(folder, rule);
@@ -210,6 +262,9 @@ internal sealed class FolderEditor : Window
             path.Text = selected;
             if (string.IsNullOrWhiteSpace(name.Text)) name.Text = Path.GetFileName(path.Text.TrimEnd(Path.DirectorySeparatorChar));
         }));
+        var useRecent = EditorUi.Check("규칙에서 최근 사용한 이동 위치 표시", folder.UseRecentDestinations);
+        form.Children.Add(useRecent);
+        EditorUi.Hint(form, "이 검사 폴더에서 저장한 규칙의 기본 이동 위치를 최근 10개까지 기록합니다. 끄면 표시와 새 기록을 중단하며, 기존 기록은 유지합니다.");
         form.Children.Add(EditorUi.Heading("검사에서 제외할 폴더"));
         var excluded = new ObservableCollection<ExcludedFolderRow>(folder.ExcludedFolders.Select(p => new ExcludedFolderRow(p)));
         var exclusionSource = folder.Path;
@@ -278,6 +333,7 @@ internal sealed class FolderEditor : Window
             try
             {
                 folder.Name = name.Text.Trim(); folder.Path = PathSafety.Normalize(path.Text.Trim());
+                folder.UseRecentDestinations = useRecent.IsChecked == true;
                 folder.Trigger = (TriggerMode)trigger.SelectedIndex;
                 folder.ProgramPath = program.Text.Trim(); folder.RunMode = (RunMode)mode.SelectedIndex;
                 if (folder.Trigger != TriggerMode.Manual)
