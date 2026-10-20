@@ -50,6 +50,12 @@ internal sealed class Tui(TerminalSession session, IRecycleBin recycle, Cancella
                         else ruleIndex = Math.Clamp(ruleIndex + delta, 0, Math.Max(0, (folder?.Rules.Count ?? 0) - 1));
                         continue;
                     }
+                    if (key == ConsoleKey.P)
+                    {
+                        var request = await TuiAnalysis.ShowAsync(session, folder?.Id, token);
+                        if (request is not null) SelectRule(EditRule(session.Folder(request.FolderId.ToString()), null, request.Rule), request.FolderId);
+                        continue;
+                    }
                     if (key == ConsoleKey.H) History();
                     if (key == ConsoleKey.S) { status = TuiSettings.Show(session, token); continue; }
                     if (key == ConsoleKey.F) { SelectFolder(EditFolder(null, false)); continue; }
@@ -194,9 +200,10 @@ internal sealed class Tui(TerminalSession session, IRecycleBin recycle, Cancella
             width => TuiDetails.FolderLines(folder, width), () => session.PutFolder(folder), original is null ? "folders add" : "folders update") ? folder.Id : null;
     }
 
-    private Guid? EditRule(FolderSpec folder, RuleSpec? original)
+    private Guid? EditRule(FolderSpec folder, RuleSpec? original, RuleSpec? preset = null)
     {
-        var rule = original is null ? new RuleSpec { Match = NameMatch.Any, Destination = DestinationPaths.Initial(folder) } : Storage.Clone(original);
+        var rule = original is not null ? Storage.Clone(original) : preset is not null ? Storage.Clone(preset)
+            : new RuleSpec { Match = NameMatch.Any, Destination = DestinationPaths.Initial(folder) };
         var form = new TuiForm(original is null ? "규칙 추가" : "규칙 편집", () => (folder.Name, folder.Path), token);
         var recent = DestinationPaths.Recent(folder);
         var recentIndex = -1;
@@ -205,8 +212,8 @@ internal sealed class Tui(TerminalSession session, IRecycleBin recycle, Cancella
             new("규칙 이름", "01 · 기본 정보", () => rule.Name, value => rule.Name = value),
             TuiForm.Toggle("규칙 사용", "01 · 기본 정보", () => rule.Enabled, value => rule.Enabled = value),
             TuiForm.Toggle("하위 폴더도 검사", "02 · 파일 조건", () => rule.Recursive, value => rule.Recursive = value),
-            TuiForm.Choice("파일명 조건", "02 · 파일 조건", () => rule.Match, value => rule.Match = value, ["단어 포함", "특정 단어로 시작", "패턴 (*, ?)", "제한 없음"]),
-            new("단어 또는 패턴", "02 · 파일 조건", () => rule.Pattern, value => rule.Pattern = value, Enabled: () => rule.Match != NameMatch.Any),
+            TuiForm.Choice("파일명 조건", "02 · 파일 조건", () => rule.Match, value => rule.Match = value, ["단어 포함", "특정 단어로 시작", "패턴 (*, ?)", "제한 없음", "분류 구분값 (대소문자 구분)"]),
+            new("단어 또는 패턴", "02 · 파일 조건", () => rule.Pattern, value => rule.Pattern = value, Enabled: () => rule.Match != NameMatch.Any, ExactInput: true),
             new("확장자 (.pdf,.jpg)", "02 · 파일 조건", () => rule.Extensions, value => rule.Extensions = value),
             new("이동할 폴더 전체 경로", "03 · 이동 동작", () => rule.Destination, value => rule.Destination = value),
             TuiForm.Toggle("대상 폴더 자동 생성", "03 · 이동 동작", () => DestinationPaths.CreatesDirectory(rule), value => rule.CreateDestination = value)
@@ -224,10 +231,12 @@ internal sealed class Tui(TerminalSession session, IRecycleBin recycle, Cancella
                     rule.Destination = recent[recentIndex];
                 }, Enabled: () => recent.Count > 0),
             new("최종 이동 폴더", "05 · 이동 위치 도우미", () => DestinationPaths.Preview(rule)),
+            new("분류 정규식", "02 · 파일 조건", () => rule.GroupExpression, value => rule.GroupExpression = value,
+                Enabled: () => rule.Match == NameMatch.Group, ExactInput: true),
         };
         fields = fields.Select((field, index) => field with
         {
-            Description = () => TuiFieldHelp.Rule(index),
+            Description = () => index == 15 ? FilenameGroups.PatternHelp + " 비우면 기존 괄호 구분값으로 비교합니다." : TuiFieldHelp.Rule(index),
             DisabledReason = () => TuiFieldHelp.RuleDisabled(index, folder),
             DisabledValue = () => index == 7 ? "켜짐 · 자동 적용" : "사용 안 함"
         }).ToArray();

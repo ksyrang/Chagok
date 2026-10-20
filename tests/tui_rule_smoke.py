@@ -74,9 +74,9 @@ try:
  send('n','항목 선택');send('s','위 검사 폴더에 규칙을 저장할까요')
  send('y','처리 실패');assert (data/'settings.json').read_bytes()==before
  focus(5);send('e','파일명 제한 없음')
- focus(4);send('\x1b[C','단어 포함')
+ focus(4);send('\x1b[C','분류 구분값');send('\x1b[C','단어 포함')
  edit(5,'단어 또는 패턴','temporary')
- focus(4);send('\x1b[D','제한 없음')
+ focus(4);send('\x1b[D','분류 구분값');send('\x1b[D','제한 없음')
  # 경로/확장자부터 수정해 앞 항목을 거치지 않고 저장할 수 있어야 한다.
  edit(7,'이동할 폴더 전체 경로',str(dst));edit(6,'확장자 (.pdf,.jpg)','.txt')
  edit(1,'규칙 이름','가나\x7f\x7fnew-rulX\x7fe\x1b[H\x1b[C\x1b[3~e\x1b[F')

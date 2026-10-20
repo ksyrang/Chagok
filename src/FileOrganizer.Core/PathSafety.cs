@@ -65,6 +65,11 @@ public static class PathSafety
         if (rule.Match != NameMatch.Any && string.IsNullOrWhiteSpace(rule.Pattern))
             throw new ArgumentException("파일명 조건을 입력하거나 ‘제한 없음’을 선택하세요.");
         _ = RuleMatcher.ParseExtensions(rule.Extensions);
+        if (rule.Match == NameMatch.Group)
+        {
+            if (rule.GroupExpression.Length == 0) _ = FilenameGroups.ValidateKey(rule.Pattern);
+            else FilenameGroups.Validate(new AnalysisOptions(CustomPattern: rule.GroupExpression));
+        }
         if (rule.Trigger != TriggerMode.Manual)
         {
             var program = Normalize(rule.ProgramPath);

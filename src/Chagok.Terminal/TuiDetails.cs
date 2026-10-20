@@ -26,10 +26,12 @@ public static class TuiDetails
         Section(lines, width, "01 · 규칙", ("규칙 이름", rule.Name), ("사용 상태", rule.Enabled ? "켜짐" : "꺼짐"),
             ("검사 폴더", folder.Name), ("검사 경로", folder.Path));
         Section(lines, width, "02 · 파일 조건", ("파일명 조건", rule.Match switch
-        { NameMatch.Contains => "특정 단어 포함", NameMatch.StartsWith => "특정 단어로 시작", NameMatch.Glob => "패턴 일치 (*, ?)", _ => "파일명 제한 없음" }),
+        { NameMatch.Contains => "특정 단어 포함", NameMatch.StartsWith => "특정 단어로 시작", NameMatch.Glob => "패턴 일치 (*, ?)", NameMatch.Group => "분류 구분값 일치", _ => "파일명 제한 없음" }),
             ("단어 / 패턴", rule.Match == NameMatch.Any ? "사용하지 않음" : rule.Pattern),
             ("확장자", string.IsNullOrWhiteSpace(rule.Extensions) ? "전체" : rule.Extensions),
             ("하위 폴더 검사", rule.Recursive ? "포함" : "포함하지 않음"));
+        if (rule.Match == NameMatch.Group && rule.GroupExpression.Length > 0)
+            Section(lines, width, "분류 정규식", ("입력한 식", rule.GroupExpression));
         Section(lines, width, "03 · 이동 동작", ("기본 이동 위치", rule.Destination),
             ("규칙명 폴더 추가", rule.AppendRuleName ? "켜짐" : "꺼짐"),
             ("최종 이동 폴더", DestinationPaths.Preview(rule)),

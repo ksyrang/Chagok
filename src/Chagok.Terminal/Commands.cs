@@ -46,13 +46,14 @@ public sealed class Commands(TerminalSession session, IRecycleBin recycle, Cance
             case "rules list": args.Allow("folder"); Write(session.Folder(args.Require("folder")).Rules, args); break;
             case "rules add": case "rules update":
             {
-                args.Allow("folder", "rule", "name", "destination", "match", "pattern", "extensions", "recursive", "conflict", "create", "enabled", "trigger", "program", "mode", "append-rule-name");
+                args.Allow("folder", "rule", "name", "destination", "match", "pattern", "group-expression", "extensions", "recursive", "conflict", "create", "enabled", "trigger", "program", "mode", "append-rule-name");
                 var folder = session.Folder(args.Require("folder"));
                 var rule = route == "rules add" ? new RuleSpec() : Storage.Clone(TerminalSession.Rule(folder, args.Require("rule")));
                 if (route == "rules add") { _ = args.Require("name"); _ = args.Require("destination"); _ = args.Require("match"); }
                 rule.Name = args.Get("name") ?? rule.Name; rule.Destination = args.Get("destination") ?? rule.Destination;
-                rule.Pattern = args.Get("pattern") ?? rule.Pattern; rule.Extensions = args.Get("extensions") ?? rule.Extensions;
-                if (args.Get("match") is { } match) rule.Match = Choice(match, new Dictionary<string, NameMatch> { ["any"] = NameMatch.Any, ["contains"] = NameMatch.Contains, ["starts"] = NameMatch.StartsWith, ["glob"] = NameMatch.Glob });
+                rule.Pattern = args.Get("pattern") ?? rule.Pattern;
+                rule.GroupExpression = args.Get("group-expression") ?? rule.GroupExpression; rule.Extensions = args.Get("extensions") ?? rule.Extensions;
+                if (args.Get("match") is { } match) rule.Match = Choice(match, new Dictionary<string, NameMatch> { ["any"] = NameMatch.Any, ["contains"] = NameMatch.Contains, ["starts"] = NameMatch.StartsWith, ["glob"] = NameMatch.Glob, ["group"] = NameMatch.Group });
                 if (args.Get("conflict") is { } conflict) rule.Conflict = Choice(conflict, new Dictionary<string, ConflictMode> { ["rename"] = ConflictMode.Rename, ["replace"] = ConflictMode.Replace, ["skip"] = ConflictMode.Skip });
                 rule.Enabled = args.Boolean("enabled", rule.Enabled); rule.Recursive = args.Boolean("recursive", rule.Recursive);
                 rule.CreateDestination = args.Boolean("create", rule.CreateDestination);
@@ -66,6 +67,31 @@ public sealed class Commands(TerminalSession session, IRecycleBin recycle, Cance
                 args.Allow("folder", "rule", "yes"); var folder = session.Folder(args.Require("folder")); var rule = TerminalSession.Rule(folder, args.Require("rule"));
                 await ConfirmAsync(args, $"‘{rule.Name}’ 규칙 설정을 제거합니다. 실제 파일은 삭제하지 않습니다.");
                 session.RemoveRule(folder.Id, rule.Id); Write(new { removed = rule.Id }, args); break;
+            }
+            case "analyze":
+            {
+                args.Allow("folder", "brackets", "recursive", "minimum", "group", "page", "file-page", "regex");
+                var analysisScope = args.Get("folder") is { } f ? session.Folder(f).Id : (Guid?)null;
+                var options = new AnalysisOptions(args.Get("brackets") is { } b ? Choice(b, new Dictionary<string, BracketKind>
+                    { ["square"] = BracketKind.Square, ["round"] = BracketKind.Round, ["curly"] = BracketKind.Curly }) : BracketKind.Square,
+                    args.Boolean("recursive", false), args.Get("regex") ?? "");
+                FilenameGroups.Validate(options);
+                var minimum = args.Number("minimum", 1, 1, int.MaxValue);
+                var page = args.Number("page", 1, 1, int.MaxValue) - 1L;
+                var filePage = args.Number("file-page", 1, 1, int.MaxValue) - 1L;
+                var key = args.Get("group");
+                if (key is not null && options.CustomPattern.Length == 0 && FilenameGroups.ValidateKey(key) != options.Brackets)
+                    throw new ArgumentException("--group의 괄호와 --brackets가 다릅니다.");
+                using var analysis = await Task.Run(() => session.Analyze(options, token, analysisScope), token);
+                var groupCount = analysis.GroupCount(analysisScope, minimum);
+                if (page > Math.Max(0, (groupCount - 1) / 100)) throw new ArgumentException("그룹 페이지 범위를 벗어났습니다.");
+                var fileCount = key is null ? 0 : analysis.FileCount(analysisScope, key);
+                if (filePage > Math.Max(0, (fileCount - 1) / 100)) throw new ArgumentException("파일 페이지 범위를 벗어났습니다.");
+                Write(new { analysis.CreatedUtc, analysis.Options, Folders = analysis.Folders(), GroupCount = groupCount,
+                    Page = page + 1, Groups = analysis.Groups(analysisScope, minimum, page), FileCount = fileCount,
+                    FilePage = filePage + 1, Files = key is null ? [] : analysis.Files(analysisScope, key, filePage),
+                    analysis.WarningCount, Warnings = analysis.Warnings() }, args);
+                return analysis.WarningCount > 0 ? 4 : 0;
             }
             case "scan": case "run":
             {

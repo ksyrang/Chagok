@@ -4,7 +4,7 @@ internal sealed class TuiForm(string title, Func<(string Name, string Path)> con
 {
     internal sealed record Field(string Label, string Section, Func<string> Value, Action<string>? Set = null,
         Action<int>? Change = null, Func<bool>? Enabled = null, Func<string>? Description = null,
-        Func<string>? DisabledReason = null, Func<string>? DisabledValue = null);
+        Func<string>? DisabledReason = null, Func<string>? DisabledValue = null, bool ExactInput = false);
 
     private static string Explanation(Field field) => (field.Enabled?.Invoke() == false
         ? (field.DisabledReason?.Invoke() ?? "현재 조건에서는 사용하지 않습니다. 기존 값은 유지합니다.") + " " : "")
@@ -106,7 +106,7 @@ internal sealed class TuiForm(string title, Func<(string Name, string Path)> con
         rows.Add("Enter 적용 / 빈 Enter 기존 값 · /clear 비우기");
         rows.Add("Esc 또는 /cancel + Enter 항목 편집만 취소");
         Dashboard.Render(rows);
-        return TerminalText.Input(field.Label, field.Value(), token, inputRow, 2, width - 8);
+        return TerminalText.Input(field.Label, field.Value(), token, inputRow, 2, width - 8, field.ExactInput);
     }
 
     private void ShowValue(Field field)

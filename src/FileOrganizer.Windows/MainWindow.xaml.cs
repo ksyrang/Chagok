@@ -37,7 +37,7 @@ public partial class MainWindow : Window
     {
         this.storage = storage; this.settings = settings;
         InitializeComponent();
-        WireExecutionFeedback();
+        WireExecutionFeedback(); InitializeFilenameAnalysis();
         Height = Math.Min(Height, SystemParameters.WorkArea.Height);
         UpdateThemeButton();
         PreviewGrid.ItemsSource = previewRows;
@@ -91,7 +91,7 @@ public partial class MainWindow : Window
         Closed += (_, _) =>
         {
             SystemEvents.UserPreferenceChanged -= SystemPreferenceChanged;
-            InvalidatePlan(); monitor.Dispose(); tray.Dispose(); trayIcon.Dispose();
+            ClearFilenameAnalysis(); InvalidatePlan(); monitor.Dispose(); tray.Dispose(); trayIcon.Dispose();
         };
         selectedFolderId = settings.Folders.FirstOrDefault()?.Id;
         UpdateCloseHint();
@@ -195,7 +195,7 @@ public partial class MainWindow : Window
             mutation(); storage.Save(settings);
             if (restartMonitor)
             {
-                InvalidatePlan(); pending.Clear(); UpdatePending();
+                ClearFilenameAnalysis(); InvalidatePlan(); pending.Clear(); UpdatePending();
                 _ = RestartMonitoringAsync();
             }
             return true;
@@ -237,7 +237,9 @@ public partial class MainWindow : Window
     {
         if (FolderList.SelectedItem is not FolderSpec folder) return;
         selectedFolderId = folder.Id;
-        InvalidatePlan(); RefreshRules(); ShowView(RulesView);
+        var showAnalysis = AnalysisView.Visibility == Visibility.Visible;
+        InvalidatePlan(); RefreshRules();
+        if (showAnalysis) { AnalysisView.Bind(filenameAnalysis, folder.Id); ShowView(AnalysisView); } else ShowView(RulesView);
         PumpPending();
     }
 
@@ -339,7 +341,7 @@ public partial class MainWindow : Window
     private async Task<DiskPlanStore?> ScanAsync(Guid folderId, IReadOnlySet<Guid>? rules = null, bool automatic = false)
     {
         if (busy || settings.Folders.FirstOrDefault(f => f.Id == folderId) is not { } folder) return null;
-        InvalidatePlan();
+        ClearFilenameAnalysis(); InvalidatePlan();
         SetBusy(true, "폴더를 검사하고 실행 계획을 디스크에 저장하고 있습니다…");
         ShowScanFeedback();
         ScanWarnings.Visibility = Visibility.Collapsed;
@@ -531,6 +533,7 @@ public partial class MainWindow : Window
         RulesView.Visibility = ReferenceEquals(view, RulesView) ? Visibility.Visible : Visibility.Collapsed;
         PreviewView.Visibility = ReferenceEquals(view, PreviewView) ? Visibility.Visible : Visibility.Collapsed;
         HistoryView.Visibility = ReferenceEquals(view, HistoryView) ? Visibility.Visible : Visibility.Collapsed;
+        AnalysisView.Visibility = ReferenceEquals(view, AnalysisView) ? Visibility.Visible : Visibility.Collapsed;
     }
     private void InvalidatePlan(bool keepFeedback = false)
     {
@@ -633,6 +636,7 @@ public partial class MainWindow : Window
         if (value) workCancellation = new CancellationTokenSource();
         else { workCancellation?.Dispose(); workCancellation = null; }
         AddFolderButton.IsEnabled = !value; FolderList.IsEnabled = !value;
+        AnalyzeAllButton.IsEnabled = !value; AnalysisView.WorkState(value);
         RuleList.IsEnabled = !value; PendingBanner.IsEnabled = !value; ThemeButton.IsEnabled = !value && !exitAfterWork;
         if (value) ThemePopup.IsOpen = false;
         SettingsButton.IsEnabled = !value && !exitAfterWork;

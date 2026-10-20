@@ -22,6 +22,16 @@ public static class DestinationPaths
         return Path.Combine(parent, name);
     }
 
+    // 화면에 표시된 최종 경로에서 이미 붙어 있는 규칙명 한 개만 제거한다.
+    public static string BaseFromDisplay(string display, string name, bool append)
+    {
+        var path = display.Trim();
+        if (!append || path.Length == 0) return path;
+        var trimmed = Path.TrimEndingDirectorySeparator(path);
+        return PathSafety.Comparer.Equals(Path.GetFileName(trimmed), name.Trim())
+            ? Path.GetDirectoryName(trimmed) ?? path : path;
+    }
+
     public static bool CreatesDirectory(RuleSpec rule) => rule.AppendRuleName || rule.CreateDestination;
 
     public static string Preview(RuleSpec rule)

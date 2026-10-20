@@ -8,7 +8,7 @@ internal sealed record RuleRow(RuleSpec Spec)
     public string Name => Spec.Name;
     public bool Enabled => Spec.Enabled;
     public string ConditionText => "조건  " + (Spec.Match == NameMatch.Any ? "파일명 제한 없음" :
-        Spec.Match switch { NameMatch.Contains => $"이름에 ‘{Spec.Pattern}’ 포함", NameMatch.StartsWith => $"‘{Spec.Pattern}’로 시작", _ => $"패턴 ‘{Spec.Pattern}’" })
+        Spec.Match switch { NameMatch.Contains => $"이름에 ‘{Spec.Pattern}’ 포함", NameMatch.StartsWith => $"‘{Spec.Pattern}’로 시작", NameMatch.Group => $"구분값 ‘{Spec.Pattern}’ 일치 (대소문자 구분)", _ => $"패턴 ‘{Spec.Pattern}’" })
         + " · " + (Spec.Extensions.Length == 0 ? "모든 확장자" : Spec.Extensions);
     public string DestinationText => "이동  " + DestinationPaths.Preview(Spec);
     public string TriggerText => Spec.Trigger == TriggerMode.Manual ? "수동 실행" :

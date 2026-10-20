@@ -53,7 +53,7 @@ public static class TerminalText
     private static int Next(string value, int cursor)
         => StringInfo.ParseCombiningCharacters(value).FirstOrDefault(i => i > cursor, value.Length);
 
-    public static string Input(string label, string current, CancellationToken token, int? inputRow = null, int column = 0, int? inputCells = null)
+    public static string Input(string label, string current, CancellationToken token, int? inputRow = null, int column = 0, int? inputCells = null, bool exactInput = false)
     {
         Console.CursorVisible = true;
         try
@@ -75,7 +75,7 @@ public static class TerminalText
                 {
                     if (inputRow is null) Console.WriteLine();
                     if (string.Equals(value.Trim(), "/cancel", StringComparison.OrdinalIgnoreCase)) throw new FormCanceledException();
-                    return value == "/clear" ? "" : value.Length == 0 ? current : value.Trim();
+                    return value == "/clear" ? "" : value.Length == 0 ? current : exactInput ? value : value.Trim();
                 }
                 if (key.Key == ConsoleKey.LeftArrow) cursor = Previous(value, cursor);
                 else if (key.Key == ConsoleKey.RightArrow) cursor = Next(value, cursor);

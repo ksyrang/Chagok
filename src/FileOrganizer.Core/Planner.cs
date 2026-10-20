@@ -69,7 +69,7 @@ public sealed class Planner
                     if (rule is null) continue;
                     sink.AddEntry(PlanFile(path, rule));
                 }
-                catch (Exception ex) when (ex is not ScanStorageException && (ex is IOException or UnauthorizedAccessException or ArgumentException))
+                catch (Exception ex) when (ex is not ScanStorageException and not FilenamePatternTimeoutException && (ex is IOException or UnauthorizedAccessException or ArgumentException))
                 { sink.AddWarning($"검사 생략: {path} — {ex.Message}"); }
             }
         }

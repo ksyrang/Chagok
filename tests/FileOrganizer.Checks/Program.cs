@@ -919,6 +919,7 @@ Add("TUI 항목 설명은 규칙명·자동 생성·최근 위치와 연동 이�
     Assert(Chagok.Terminal.TuiFieldHelp.Folder(6).Contains("새 규칙") && Chagok.Terminal.TuiFieldHelp.Folder(6).Contains("기존 기록"));
 });
 
+AnalysisChecks.Register(Add);
 var failures = 0;
 Add("통합 EXE는 GUI·탐색기와 터미널 명령을 분리", () =>
 {
@@ -980,7 +981,8 @@ Add("AI 도움말은 실행 승인·변경 효과·필수 인수와 전체 기�
     Assert(command.GetProperty("effects").EnumerateArray().Any(e => e.GetString()!.Contains("원본 삭제")));
     Assert(command.GetProperty("options").EnumerateArray().Single(o => o.GetProperty("name").GetString() == "folder").GetProperty("required").GetBoolean());
     Assert(command.GetProperty("confirmation").GetString()!.Contains("--yes"));
-    Assert(Chagok.Terminal.HelpCatalog.Find("").Length == 18);
+    Assert(Chagok.Terminal.HelpCatalog.Find("").Length == 19);
+    Assert(Chagok.Terminal.HelpCatalog.Find("analyze").Single().Confirmation == "없음");
     Assert(Chagok.Terminal.HelpCatalog.Find("folders").Length == 5);
     Throws<ArgumentException>(() => Chagok.Terminal.HelpCatalog.Find("unknown"));
 });

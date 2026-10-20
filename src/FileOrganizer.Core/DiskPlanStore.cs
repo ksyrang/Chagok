@@ -243,7 +243,7 @@ public sealed class DiskPlanStore : IDisposable, IScanSink
         try
         {
             PathSafety.AssertNoLinks(directory);
-            var known = new HashSet<string>(StringComparer.Ordinal) { "lease", "plan.db", "plan.db-journal", "plan.db-wal", "plan.db-shm" };
+            var known = new HashSet<string>(StringComparer.Ordinal) { "lease", "plan.db", "plan.db-journal", "plan.db-wal", "plan.db-shm", "analysis.db", "analysis.db-journal", "analysis.db-wal", "analysis.db-shm" };
             if (Directory.EnumerateDirectories(directory).Any() || Directory.EnumerateFiles(directory).Any(p => !known.Contains(Path.GetFileName(p)))) return;
             foreach (var file in Directory.EnumerateFiles(directory)) { PathSafety.AssertNoLinks(file); File.Delete(file); }
             Directory.Delete(directory);

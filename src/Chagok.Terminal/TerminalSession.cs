@@ -44,6 +44,14 @@ public sealed class TerminalSession(Storage storage, AppSettings settings)
         var folder = FileOrganizer.Core.Storage.Clone(Folder(folderId.ToString()));
         folder.Rules.RemoveAll(r => r.Id == id); PutFolder(folder);
     }
+    public FilenameAnalysis Analyze(AnalysisOptions options, CancellationToken token, Guid? scope = null)
+    {
+        var folders = Settings.Folders.Where(f => scope is null || f.Id == scope).Select(FileOrganizer.Core.Storage.Clone).ToArray();
+        if (folders.Any(f => PathSafety.IsWithin(f.Path, Storage.DirectoryPath)))
+            throw new ArgumentException("차곡 데이터 저장소는 분석 폴더로 사용할 수 없습니다.");
+        var destinations = Settings.Folders.SelectMany(f => f.Rules).Select(DestinationPaths.Resolve).Append(Storage.DirectoryPath).ToArray();
+        return FilenameAnalysis.Scan(folders, destinations, Path.Combine(Storage.DirectoryPath, "analysis-cache"), options, token);
+    }
     public DiskPlanStore Scan(FolderSpec folder, IReadOnlySet<Guid>? rules, CancellationToken token)
     {
         if (PathSafety.IsWithin(folder.Path, PathSafety.Normalize(Storage.DirectoryPath)))

@@ -10,8 +10,8 @@ public sealed record CommandHelp(string Name, string Title, string Description, 
 
 public static class HelpCatalog
 {
-    public const string Version = "0.5.8";
-    public const string Executable = "Chagok-v0.5.8.exe";
+    public const string Version = "0.6.0";
+    public const string Executable = "Chagok-v0.6.0.exe";
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
     private static OptionHelp O(string name, string description, bool required = false, string type = "string", string? fallback = null, params string[] choices)
@@ -27,8 +27,9 @@ public static class HelpCatalog
         O("exclude", "제외할 하위 폴더 전체 경로를 세미콜론으로 구분합니다.", type: "pathList"),
         O("recent-destinations", "폴더별 최근 기본 이동 위치 표시·기록. 기본 꺼짐, 규칙 저장 시 최근 10개. 끄면 기존 기록은 유지합니다.", false, "boolean", null, "on", "off", "true", "false"), ..Trigger];
     private static readonly OptionHelp[] RuleFields = [O("name", "규칙 이름"), O("destination", "이동할 폴더의 전체 경로", type: "absolutePath"),
-        O("match", "파일명 비교 방식", false, "enum", null, "any", "contains", "starts", "glob"),
-        O("pattern", "contains/starts/glob에서 필수인 단어 또는 와일드카드 패턴"),
+        O("match", "파일명 비교 방식. group은 괄호 구분값을 대소문자 구분해 비교합니다.", false, "enum", null, "any", "contains", "starts", "glob", "group"),
+        O("pattern", "contains/starts/glob은 단어·패턴, group은 정확한 구분값"),
+        O("group-expression", "group 조건의 분류 정규식. 비우면 기존 괄호 구분값. (?<group>...) 캡처 또는 전체 일치 값을 비교"),
         O("extensions", "쉼표로 구분한 확장자. 빈 값이면 전체 파일 형식입니다."),
         O("recursive", "하위 폴더 포함", false, "boolean", null, "on", "off", "true", "false"),
         O("conflict", "이름 충돌 처리. replace는 기존 대상을 휴지통으로 보낸 뒤 교체합니다.", false, "enum", null, "rename", "replace", "skip"),
@@ -56,16 +57,17 @@ public static class HelpCatalog
         => fields.Select(o => names.Contains(o.Name) ? o with { Required = true } : o).ToArray();
     public static IReadOnlyList<CommandHelp> Commands { get; } = Array.AsReadOnly(new[] {
         C("tui", "화면으로 사용", "폴더·규칙을 보고 선택한 항목을 검사·실행합니다. F1 또는 ?로 기능 도움말을 엽니다.", "tui", ["설정 편집 가능", "확인 후 파일 이동 가능"], "이동 전 전체 선택 개수로 확인", [], ["tui"],
-            ["Tab 영역 전환 → ↑↓ 규칙 선택 → R 이 규칙만 검사 → Enter → Y로 이동합니다. A는 폴더 전체입니다.", "F 폴더 추가, N 규칙 추가, E 편집, Space 규칙 켜기/끄기. 입력 중 Esc는 저장하지 않고 돌아가기입니다.", "S 설정은 ↑↓/1~4로 항목을 골라 ←→/Enter/Space로 값을 바꿉니다. S 저장, Esc 변경 취소입니다.", "폴더/규칙 폼은 ↑↓/Tab/1~9로 항목 선택, Enter/E 텍스트 편집, ←→ 선택값 변경, I 전체 값 확인입니다. S 검토 후 Y 저장. 입력칸 Esc는 항목 취소, 목록 Esc는 전체 폼 취소입니다.", "대화형 터미널이 필요하며 --json은 지원하지 않습니다."]),
+            ["P 파일명 분석. Tab 영역 전환 → ↑↓ 규칙 선택 → R 이 규칙만 검사 → Enter → Y로 이동합니다. A는 폴더 전체입니다.", "F 폴더 추가, N 규칙 추가, E 편집, Space 규칙 켜기/끄기. 입력 중 Esc는 저장하지 않고 돌아가기입니다.", "S 설정은 ↑↓/1~4로 항목을 골라 ←→/Enter/Space로 값을 바꿉니다. S 저장, Esc 변경 취소입니다.", "폴더/규칙 폼은 ↑↓/Tab/1~9로 항목 선택, Enter/E 텍스트 편집, ←→ 선택값 변경, I 전체 값 확인입니다. S 검토 후 Y 저장. 입력칸 Esc는 항목 취소, 목록 Esc는 전체 폼 취소입니다.", "대화형 터미널이 필요하며 --json은 지원하지 않습니다."]),
         C("folders list", "검사 폴더 조회", "등록된 폴더의 ID·이름·경로·규칙 개수·실행 조건을 조회합니다.", "folders list", ["설정 조회"], "없음", [], ["folders list --json"]),
         C("folders add", "검사 폴더 추가", "이름·검사 위치·제외 경로·실행 조건을 등록합니다. 저장만으로 파일은 이동하지 않습니다.", "folders add --name 이름 --path 전체경로", ["설정 저장"], "명령 실행으로 저장", Required(FolderFields, "name", "path"), ["folders add --name 다운로드 --path C:\\Data\\Inbox"], ["폴더 기본값: 수동, 목록 확인. 검사 폴더는 이미 존재해야 합니다."]),
         C("folders update", "검사 폴더 편집", "지정한 필드만 바꾸고 나머지는 유지합니다. 검사 경로 변경 시 생략한 제외 경로는 같은 상대 위치로 재배치합니다.", "folders update --folder ID [옵션]", ["설정 저장"], "명령 실행으로 저장", [Folder, ..FolderFields], ["folders update --folder 다운로드 --name 받은파일"]),
         C("folders clone", "폴더와 규칙 복제", "새 이름·검사 경로로 폴더와 모든 규칙을 복제합니다. 새 ID를 부여하고 원본은 유지합니다.", "folders clone --folder ID --name 새이름 --path 새경로", ["설정 저장"], "명령 실행으로 저장", [Folder, ..Required(FolderFields, "name", "path")], ["folders clone --folder 다운로드 --name 다른자료 --path D:\\Inbox"], ["규칙의 이동 목적지는 유지합니다. 겹치는 검사 경로는 거부합니다."]),
         C("folders remove", "검사 폴더 등록 제거", "폴더와 그 폴더의 규칙 설정을 제거합니다. 실제 파일과 폴더는 유지합니다.", "folders remove --folder ID [--yes]", ["등록 설정 제거"], "대화형 yes 또는 --yes. JSON/리디렉션에서는 --yes 필수", [Folder, Yes], ["folders remove --folder 다운로드 --yes"]),
         C("rules list", "규칙 조회", "선택한 검사 폴더의 규칙과 전체 ID·조건·목적지·사용 여부를 조회합니다.", "rules list --folder ID", ["설정 조회"], "없음", [Folder], ["rules list --folder 다운로드 --json"]),
-        C("rules add", "규칙 추가", "파일명·확장자 조건, 이동 목적지, 이름 충돌 처리와 실행 조건을 저장합니다.", "rules add --folder ID --name 이름 --destination 전체경로 --match any|contains|starts|glob", ["설정 저장"], "명령 실행으로 저장", [Folder, ..Required(RuleFields, "name", "destination", "match")], ["rules add --folder 다운로드 --name PDF --destination D:\\Sorted\\PDF --match any --extensions .pdf"], ["기본값: 켜짐, 하위 폴더 제외, 목적지 자동 생성, 이름 번호 추가, 수동, 목록 확인.", "한 파일은 위에서 처음 일치하는 켜진 규칙 하나로 처리합니다. R 또는 run --rule로 개별 범위를 지정할 수 있습니다."]),
+        C("rules add", "규칙 추가", "파일명·확장자 조건, 이동 목적지, 이름 충돌 처리와 실행 조건을 저장합니다.", "rules add --folder ID --name 이름 --destination 전체경로 --match any|contains|starts|glob|group", ["설정 저장"], "명령 실행으로 저장", [Folder, ..Required(RuleFields, "name", "destination", "match")], ["rules add --folder 다운로드 --name PDF --destination D:\\Sorted\\PDF --match any --extensions .pdf"], ["기본값: 켜짐, 하위 폴더 제외, 목적지 자동 생성, 이름 번호 추가, 수동, 목록 확인.", "한 파일은 위에서 처음 일치하는 켜진 규칙 하나로 처리합니다. R 또는 run --rule로 개별 범위를 지정할 수 있습니다."]),
         C("rules update", "규칙 편집", "선택한 규칙의 지정한 필드만 수정합니다. 생략한 값과 ID·순서를 유지합니다.", "rules update --folder ID --rule ID [옵션]", ["설정 저장"], "명령 실행으로 저장", [Folder, Rule, ..RuleFields], ["rules update --folder 다운로드 --rule PDF --enabled off"]),
         C("rules remove", "규칙 제거", "선택한 규칙 설정만 제거합니다. 이미 이동한 파일과 원본 폴더는 유지합니다.", "rules remove --folder ID --rule ID [--yes]", ["등록 설정 제거"], "대화형 yes 또는 --yes. JSON/리디렉션에서는 --yes 필수", [Folder, Rule, Yes], ["rules remove --folder 다운로드 --rule PDF --yes"]),
+        C("analyze", "파일명 분석", "등록 폴더의 괄호·정규식 구분값별 파일 수와 파일 목록을 조회합니다. 내용은 읽지 않으며 파일을 이동하지 않습니다.", "analyze [--folder ID] [--brackets square|round|curly] [--regex 정규식] [--group 구분값]", ["파일명 조회", "임시 분석 DB 생성·종료 시 정리"], "없음", [Folder with { Required = false }, O("regex", "직접 입력 분류 정규식. (?<group>...) 캡처가 없으면 전체 일치 값. --brackets보다 우선"), O("brackets", "괄호 종류", false, "enum", "square", "square", "round", "curly"), O("recursive", "하위 폴더 포함. 기본 off", false, "boolean", "off", "on", "off"), O("minimum", "표시할 그룹의 최소 파일 수", type: "integer", fallback: "1"), O("group", "파일 목록을 볼 정확한 구분값. 예: [a]"), O("page", "그룹 페이지. 페이지당 100개", type: "integer", fallback: "1"), O("file-page", "파일 페이지. 페이지당 100개", type: "integer", fallback: "1")], ["analyze --folder 다운로드 --minimum 2 --json", "analyze --folder 다운로드 --group [a] --json"], ["대소문자·공백을 구분합니다. 같은 파일의 같은 구분값은 한 번만 셉니다. 여러 구분값이 있는 파일은 각 그룹에서 집계합니다.", "직접 입력은 최대 2,000자 .NET 정규식입니다. (?<group>...)가 있으면 그 캡처 값, 없으면 전체 일치 값으로 묶습니다. 파일당 100ms 초과 시 중단합니다.", "괄호 기본 모드에서 빈 괄호·중첩 괄호는 집계하지 않습니다. 제외 폴더·이동 목적지·데이터 저장소·링크를 제외합니다.", "결과는 분석 시점 스냅샷입니다. --folder 생략 시 전체 등록 폴더를 분석하고 구분값을 합산합니다.", "TUI의 P 파일명 분석 → Tab 폴더/그룹/파일 → C 규칙 만들기. M 필터, B 괄호, E 정규식 입력·예시·시험 미리보기, S 하위 폴더, I 전체 값, W 경고.", "GUI/TUI에서 만든 구분값 규칙도 실행 전 새 검사를 거치며 이 분석은 파일 이동 승인이 아닙니다."]),
         C("scan", "이동 대상 검사", "폴더 또는 개별 규칙의 이동 계획을 만듭니다. 파일은 이동하지 않고 결과 100건씩 조회합니다.", "scan --folder ID [--rule ID] [--page 1]", ["설정 조회", "임시 검사 캐시 생성·정리"], "없음", [Folder, Rule with { Required = false }, O("page", "100건 단위 페이지 번호", type: "integer", fallback: "1")], ["scan --folder 다운로드 --rule PDF --json", "scan --folder 다운로드 --page 2 --json"], ["run은 이 계획을 재사용하지 않습니다. TUI에서는 검사한 목록의 개별 파일을 선택할 수 있습니다."]),
         C("run", "검사 후 이동", "새로 검사한 실행 가능 항목 전체를 승인 후 이동합니다. --rule이 있으면 그 규칙만 검사합니다.", "run --folder ID [--rule ID] [--yes]", ["파일 복사·검증·원본 삭제", "조건에 따라 폴더 생성·기존 대상 휴지통 이동", "실행 기록 저장"], "대화형 yes 또는 --yes. JSON/리디렉션에서는 --yes 필수", [Folder, Rule with { Required = false }, Yes], ["run --folder 다운로드 --rule PDF", "run --folder 다운로드 --rule PDF --yes --json"], ["--yes는 모든 페이지의 실행 가능한 항목 승인입니다. 이전 scan 이후 바뀐 파일도 새 검사에 포함될 수 있습니다.", "자동화는 먼저 scan 결과를 검토하고 사용자가 허용한 범위에서만 --yes로 실행하세요."]),
         C("history", "실행 기록 조회", "최근 감지·실행 기록에서 시간·원본·대상·결과·이유를 조회합니다.", "history [--limit 20]", ["실행 기록 조회"], "없음", [O("limit", "최근 기록 개수: 1~500", type: "integer", fallback: "20")], ["history --limit 50 --json"]),

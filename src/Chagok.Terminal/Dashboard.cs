@@ -40,9 +40,9 @@ public static class Dashboard
         lines.Add(Row("이동       " + (rule is null ? "—" : DestinationPaths.Preview(rule)), width));
         lines.Add(Bottom(width));
         lines.Add("[R 이 규칙만 검사 및 실행]  ·  이동 전 목록 확인");
-        lines.Add("[A 폴더 전체 검사 및 실행]  [E 편집]");
+        lines.Add("[A 폴더 전체 검사 및 실행]  [P 파일명 분석]");
         lines.Add("Tab 영역 · ↑↓ 선택 · Enter 규칙/검사 · Space 켜기/끄기");
-        lines.Add("N 규칙 · F 폴더 · C 복제 · D 제거 · I 상세");
+        lines.Add("E 편집 · N 규칙 · F 폴더 · C 복제 · D 제거 · I 상세");
         lines.Add("F1/? 기능 도움말 · H 기록 · S 설정 · W 감지 · Q 종료");
         return lines;
     }
@@ -71,7 +71,7 @@ public static class Dashboard
 
     private static string MatchLabel(RuleSpec rule) => rule.Match switch
     { NameMatch.Any => "파일명 제한 없음", NameMatch.Contains => "포함: " + rule.Pattern,
-      NameMatch.StartsWith => "시작: " + rule.Pattern, _ => "패턴: " + rule.Pattern };
+      NameMatch.StartsWith => "시작: " + rule.Pattern, NameMatch.Group => "구분값: " + rule.Pattern, _ => "패턴: " + rule.Pattern };
 
     internal static void Preview(FolderSpec folder, IReadOnlyList<StoredPlanEntry> rows, int selected,
         long page, DiskPlanStore plan, string scope)

@@ -7,7 +7,7 @@ public enum ThemeMode { System, Light, Dark }
 [JsonConverter(typeof(JsonStringEnumConverter<WindowCloseAction>))]
 public enum WindowCloseAction { HideToTray, Exit }
 [JsonConverter(typeof(JsonStringEnumConverter<NameMatch>))]
-public enum NameMatch { Contains, StartsWith, Glob, Any }
+public enum NameMatch { Contains, StartsWith, Glob, Any, Group }
 [JsonConverter(typeof(JsonStringEnumConverter<ConflictMode>))]
 public enum ConflictMode { Rename, Replace, Skip }
 [JsonConverter(typeof(JsonStringEnumConverter<TriggerMode>))]
@@ -48,6 +48,7 @@ public sealed class RuleSpec
     public bool Recursive { get; set; }
     public NameMatch Match { get; set; } = NameMatch.Contains;
     public string Pattern { get; set; } = "";
+    public string GroupExpression { get; set; } = "";
     public string Extensions { get; set; } = "";
     public string Destination { get; set; } = "";
     public bool AppendRuleName { get; set; }
