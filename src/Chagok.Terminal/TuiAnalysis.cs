@@ -8,7 +8,7 @@ internal static class TuiAnalysis
     public static async Task<AnalysisRuleRequest?> ShowAsync(TerminalSession session, Guid? selected, CancellationToken token)
     {
         if (session.Settings.Folders.Count == 0) throw new ArgumentException("먼저 F로 검사 폴더를 추가하세요.");
-        var options = new AnalysisOptions();
+        var options = FilenameConditionSet.Unrestricted().ToOptions();
         FilenameAnalysis? store = null;
         var folderIndex = Math.Max(0, session.Settings.Folders.FindIndex(f => f.Id == selected));
         var pane = 0; var groupIndex = 0; var fileIndex = 0; long groupPage = 0, filePage = 0;
@@ -89,7 +89,7 @@ internal static class TuiAnalysis
                 rows.Add(TerminalText.Fit("선택 폴더: " + folder.Path, width));
                 rows.Add($"그룹 {groupPage + 1}/{Math.Max(1, (groupCount + 99) / 100)} · 파일 {filePage + 1}/{Math.Max(1, (fileCount + 99) / 100)} · 100개씩 읽기");
                 rows.Add("Tab/←→ 영역 · ↑↓ 선택 · Enter 파일 목록 · N/P 페이지 · I 전체 값");
-                rows.Add("M 2개 이상/전체 · B 괄호 · E 정규식 · S 하위 폴더 · R 다시 분석");
+                rows.Add("M 2개 이상/전체 · G 조건으로 선택 · E 직접 입력 (정규식) · S 하위 폴더 · R 다시 분석");
                 rows.Add("C 이 그룹으로 규칙 만들기 · W 경고 · Esc 목록 복귀 · F1 도움말");
                 Dashboard.Render(rows, selections: selections);
                 var input = TerminalText.Key(token); var key = input.Key;
@@ -106,8 +106,12 @@ internal static class TuiAnalysis
                     else fileIndex = Math.Clamp(fileIndex + delta, 0, Math.Max(0, files.Count - 1));
                 }
                 if (key == ConsoleKey.M) { minimum = minimum == 2 ? 1 : 2; groupPage = filePage = 0; groupIndex = fileIndex = 0; LoadGroups(); }
-                if (key == ConsoleKey.B) { options = options with { Brackets = (BracketKind)(((int)options.Brackets + 1) % 3), CustomPattern = "" }; rescan = true; }
                 if (key == ConsoleKey.S) { options = options with { Recursive = !options.Recursive }; rescan = true; }
+                if (key is ConsoleKey.G or ConsoleKey.B)
+                {
+                    var conditions = TuiConditionEditor.Show(options.Conditions, options.Brackets, () => (folder.Name, folder.Path), token);
+                    if (conditions is not null) { options = conditions.ToOptions(options.Recursive); rescan = true; }
+                }
                 if (key == ConsoleKey.E)
                 {
                     var expression = options.CustomPattern.Length == 0 ? FilenameGroups.PatternExample : options.CustomPattern;
@@ -117,7 +121,7 @@ internal static class TuiAnalysis
                     {
                         try
                         {
-                            var draft = options with { CustomPattern = expression };
+                            var draft = options with { CustomPattern = expression, Conditions = null };
                             if (expression.Length == 0) return "정규식을 입력하세요.";
                             FilenameGroups.Validate(draft);
                             var keys = FilenameGroups.Extract(sample, draft);
@@ -134,7 +138,7 @@ internal static class TuiAnalysis
                         ], "이 식으로 등록 폴더를 다시 분석할까요?", _ => [expression, sample, Preview()], () =>
                         {
                             if (string.IsNullOrWhiteSpace(expression)) throw new ArgumentException("분류 정규식을 입력하세요.");
-                            var draft = options with { CustomPattern = expression };
+                            var draft = options with { CustomPattern = expression, Conditions = null };
                             FilenameGroups.Validate(draft); _ = FilenameGroups.Extract(sample, draft); options = draft;
                         }, "analyze")) rescan = true;
                     }

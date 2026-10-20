@@ -49,6 +49,7 @@ public sealed class RuleSpec
     public NameMatch Match { get; set; } = NameMatch.Contains;
     public string Pattern { get; set; } = "";
     public string GroupExpression { get; set; } = "";
+    public FilenameConditionSet? GroupConditions { get; set; }
     public string Extensions { get; set; } = "";
     public string Destination { get; set; } = "";
     public bool AppendRuleName { get; set; }

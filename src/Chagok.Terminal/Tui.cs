@@ -231,12 +231,19 @@ internal sealed class Tui(TerminalSession session, IRecycleBin recycle, Cancella
                     rule.Destination = recent[recentIndex];
                 }, Enabled: () => recent.Count > 0),
             new("최종 이동 폴더", "05 · 이동 위치 도우미", () => DestinationPaths.Preview(rule)),
-            new("분류 정규식", "02 · 파일 조건", () => rule.GroupExpression, value => rule.GroupExpression = value,
+            new("분류 정규식", "02 · 파일 조건", () => rule.GroupExpression, value => { rule.GroupExpression = value; rule.GroupConditions = null; },
                 Enabled: () => rule.Match == NameMatch.Group, ExactInput: true),
+            new("분류 조건 선택", "02 · 파일 조건", () => rule.GroupConditions?.Summary ?? "Enter로 조건 설정",
+                Change: _ =>
+                {
+                    var conditions = TuiConditionEditor.Show(rule.GroupConditions, rule.GroupConditions?.Brackets ?? BracketKind.Square,
+                        () => (folder.Name, folder.Path), token);
+                    if (conditions is not null) { rule.GroupConditions = conditions; rule.GroupExpression = conditions.Compile(); }
+                }, Enabled: () => rule.Match == NameMatch.Group),
         };
         fields = fields.Select((field, index) => field with
         {
-            Description = () => index == 15 ? FilenameGroups.PatternHelp + " 비우면 기존 괄호 구분값으로 비교합니다." : TuiFieldHelp.Rule(index),
+            Description = () => TuiFieldHelp.Rule(index),
             DisabledReason = () => TuiFieldHelp.RuleDisabled(index, folder),
             DisabledValue = () => index == 7 ? "켜짐 · 자동 적용" : "사용 안 함"
         }).ToArray();

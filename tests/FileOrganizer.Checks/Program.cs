@@ -920,6 +920,9 @@ Add("TUI 항목 설명은 규칙명·자동 생성·최근 위치와 연동 이�
 });
 
 AnalysisChecks.Register(Add);
+ConditionChecks.Register(Add);
+RegexLessonChecks.Register(Add);
+AnalysisAccordionChecks.Register(Add);
 var failures = 0;
 Add("통합 EXE는 GUI·탐색기와 터미널 명령을 분리", () =>
 {
@@ -1072,12 +1075,18 @@ Add("설정 목록은 60열 화면에 모든 항목과 선택 설명·저장·�
     }
 });
 
-foreach (var (name, run) in tests)
+if (args.Length != 0 && (args.Length != 2 || args[0] != "--filter"))
+{
+    Console.Error.WriteLine("사용법: FileOrganizer.Checks [--filter 테스트명]"); return 2;
+}
+var selectedTests = args.Length == 0 ? tests : tests.Where(t => t.Name.Contains(args[1], StringComparison.OrdinalIgnoreCase)).ToList();
+if (selectedTests.Count == 0) { Console.Error.WriteLine("일치하는 테스트가 없습니다."); return 2; }
+foreach (var (name, run) in selectedTests)
 {
     try { await run(); Console.WriteLine("PASS " + name); }
     catch (Exception ex) { failures++; Console.Error.WriteLine("FAIL " + name + "\n" + ex); }
 }
-Console.WriteLine($"{tests.Count - failures}/{tests.Count} passed");
+Console.WriteLine($"{selectedTests.Count - failures}/{selectedTests.Count} passed");
 return failures == 0 ? 0 : 1;
 
 sealed class Fixture : IDisposable

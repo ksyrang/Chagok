@@ -1,18 +1,18 @@
-# 차곡 CLI·TUI 사용법 · 0.6.0
+# 차곡 CLI·TUI 사용법 · 0.6.6
 
 ## 시작
 
-배포 ZIP을 압축 해제하면 `Chagok-v0.6.0.exe` 하나가 있습니다. 더블 클릭하거나 인수 없이 실행하면 GUI가 열립니다. .NET SDK 설치 없이 실행할 수 있습니다. PowerShell에서 압축 해제한 폴더로 이동한 뒤 사용하세요. PATH를 자동 변경하지 않으므로 현재 폴더의 실행 파일 앞에 `./` 또는 `.\`를 붙입니다.
+배포 ZIP을 압축 해제하면 `Chagok-v0.6.6.exe` 하나가 있습니다. 더블 클릭하거나 인수 없이 실행하면 GUI가 열립니다. .NET SDK 설치 없이 실행할 수 있습니다. PowerShell에서 압축 해제한 폴더로 이동한 뒤 사용하세요. PATH를 자동 변경하지 않으므로 현재 폴더의 실행 파일 앞에 `./` 또는 `.\`를 붙입니다.
 
 ```powershell
-.\Chagok-v0.6.0.exe tui          # 방향키로 쓰는 TUI
-.\Chagok-v0.6.0.exe help         # 전체 명령 도움말
-.\Chagok-v0.6.0.exe version
+.\Chagok-v0.6.6.exe tui          # 방향키로 쓰는 TUI
+.\Chagok-v0.6.6.exe help         # 전체 명령 도움말
+.\Chagok-v0.6.6.exe version
 ```
 
 GUI·CLI·TUI는 `%LOCALAPPDATA%\FileOrganizer`의 같은 설정과 기록을 사용합니다. 설정 형식은 버전 1을 유지하므로 등록된 폴더·규칙·테마·창 닫기 설정을 이어 사용합니다. 터미널에서 변경한 GUI 테마·닫기 설정은 다음 GUI 실행 때 적용합니다. TUI는 터미널 색을 사용하며 선택 항목은 `>`, 현재 영역은 `▶`로 표시합니다. 폴더·규칙·조건·목적지가 같은 화면에 표시됩니다. 최소 창 크기는 60열 × 24줄이며, 권장 크기는 80열 × 24줄 이상입니다. 작은 창에서는 크기 조정 안내를 표시하고 실행을 기다립니다. 너비가 80열보다 작으면 선택 영역의 목록을 표시하며 Tab으로 전환합니다.
 
-**한 번에 하나만 실행합니다.** GUI가 트레이에 남아 있거나 TUI·watch가 실행 중이면 다른 클라이언트는 종료 코드 3으로 거부됩니다. GUI 트레이의 ‘종료’, TUI의 Q, watch의 Q 또는 Ctrl+C로 기존 세션을 끝낸 뒤 전환하세요. 이 버전은 두 앱을 동시에 열어 IPC로 설정을 동기화하는 구조가 아닙니다. 이전 GUI도 같은 Windows mutex를 확인하므로 같은 세션에서 충돌을 막습니다. 여러 로그인 세션에서도 0.6.0은 데이터 폴더 잠금을 함께 확인합니다.
+**한 번에 하나만 실행합니다.** GUI가 트레이에 남아 있거나 TUI·watch가 실행 중이면 다른 클라이언트는 종료 코드 3으로 거부됩니다. GUI 트레이의 ‘종료’, TUI의 Q, watch의 Q 또는 Ctrl+C로 기존 세션을 끝낸 뒤 전환하세요. 이 버전은 두 앱을 동시에 열어 IPC로 설정을 동기화하는 구조가 아닙니다. 이전 GUI도 같은 Windows mutex를 확인하므로 같은 세션에서 충돌을 막습니다. 여러 로그인 세션에서도 0.6.6은 데이터 폴더 잠금을 함께 확인합니다.
 
 `session.lock`은 실행 중 열린 핸들로 잠급니다. 파일 자체가 남아 있는 것은 정상입니다. 잠금 파일을 직접 지우지 마세요. OS가 프로세스 핸들을 해제하면 비정상 종료 후에도 재실행할 수 있습니다. 실행 파일이나 데이터 폴더를 강제로 삭제해 잠금을 우회하지 마세요.
 
@@ -54,19 +54,19 @@ R은 어느 영역에서도 선택 규칙만 검사합니다. A는 폴더의 켜
 먼저 실제 파일 대신 복사본으로 시험하세요. 경로·이름에 공백이 있으면 따옴표로 감쌉니다. 이름이 중복되면 목록에 표시된 전체 ID를 사용해야 합니다.
 
 ```powershell
-.\Chagok-v0.6.0.exe folders add --name 다운로드 --path "C:\Users\사용자\Downloads"
-.\Chagok-v0.6.0.exe folders list
-.\Chagok-v0.6.0.exe rules add --folder 다운로드 --name "PDF 정리" --destination "D:\정리\PDF" --match any --extensions .pdf
-.\Chagok-v0.6.0.exe rules list --folder 다운로드
-.\Chagok-v0.6.0.exe scan --folder 다운로드 --rule "PDF 정리"
-.\Chagok-v0.6.0.exe run --folder 다운로드 --rule "PDF 정리"
+.\Chagok-v0.6.6.exe folders add --name 다운로드 --path "C:\Users\사용자\Downloads"
+.\Chagok-v0.6.6.exe folders list
+.\Chagok-v0.6.6.exe rules add --folder 다운로드 --name "PDF 정리" --destination "D:\정리\PDF" --match any --extensions .pdf
+.\Chagok-v0.6.6.exe rules list --folder 다운로드
+.\Chagok-v0.6.6.exe scan --folder 다운로드 --rule "PDF 정리"
+.\Chagok-v0.6.6.exe run --folder 다운로드 --rule "PDF 정리"
 ```
 
 `scan`은 파일을 이동하지 않습니다. `run`은 **새로 검사**하고 첫 페이지와 전체 개수를 표시한 뒤 `yes`를 입력받습니다. 이전 scan의 선택·계획을 가져오는 명령은 아닙니다. 파일 선택은 TUI를 사용하세요. CLI run은 새 계획의 모든 실행 가능 항목을 대상으로 합니다. 표시된 100건만 실행하는 것이 아닙니다.
 
 ```powershell
-.\Chagok-v0.6.0.exe scan --folder 다운로드 --page 2 --json
-.\Chagok-v0.6.0.exe run --folder 다운로드 --rule "PDF 정리" --yes --json
+.\Chagok-v0.6.6.exe scan --folder 다운로드 --page 2 --json
+.\Chagok-v0.6.6.exe run --folder 다운로드 --rule "PDF 정리" --yes --json
 ```
 
 `--yes`는 전체 범위 실행에 대한 승인입니다. 자동화·리디렉션·JSON 실행에는 이 옵션이 필요하며, 없으면 파일을 옮기지 않고 종료 코드 2를 반환합니다. 실행 전에 파일 상태를 다시 확인하고 기존 Executor의 복사·검증·원본 보존 정책을 유지합니다. `--json`은 stdout에 결과 JSON, 오류는 stderr에 오류 JSON을 출력합니다. 일반 명령은 한 JSON 객체/배열이며 watch는 이벤트마다 한 줄의 JSON을 출력합니다.
@@ -87,14 +87,14 @@ R은 어느 영역에서도 선택 규칙만 검사합니다. A는 폴더의 켜
 `folders update`, `rules update`는 지정한 값만 바꾸고 나머지는 유지합니다. 제외 폴더·프로그램 조건은 GUI와 같은 설정 필드에 저장합니다. 폴더 복제는 원본의 목적지를 그대로 유지하며 제외 경로를 새 원본의 같은 상대 위치로 옮깁니다.
 
 ```powershell
-.\Chagok-v0.6.0.exe folders clone --folder 다운로드 --name "다른 자료" --path "E:\자료"
-.\Chagok-v0.6.0.exe rules update --folder 다운로드 --rule "PDF 정리" --enabled off
-.\Chagok-v0.6.0.exe folders update --folder 다운로드 --exclude "C:\Users\사용자\Downloads\보관"
-.\Chagok-v0.6.0.exe rules remove --folder 다운로드 --rule "PDF 정리" --yes
-.\Chagok-v0.6.0.exe folders remove --folder "다른 자료" --yes
-.\Chagok-v0.6.0.exe settings set --theme dark --close tray --confirm-exit on
-.\Chagok-v0.6.0.exe settings show
-.\Chagok-v0.6.0.exe history --limit 20 --json
+.\Chagok-v0.6.6.exe folders clone --folder 다운로드 --name "다른 자료" --path "E:\자료"
+.\Chagok-v0.6.6.exe rules update --folder 다운로드 --rule "PDF 정리" --enabled off
+.\Chagok-v0.6.6.exe folders update --folder 다운로드 --exclude "C:\Users\사용자\Downloads\보관"
+.\Chagok-v0.6.6.exe rules remove --folder 다운로드 --rule "PDF 정리" --yes
+.\Chagok-v0.6.6.exe folders remove --folder "다른 자료" --yes
+.\Chagok-v0.6.6.exe settings set --theme dark --close tray --confirm-exit on
+.\Chagok-v0.6.6.exe settings show
+.\Chagok-v0.6.6.exe history --limit 20 --json
 ```
 
 remove는 **등록 설정만 제거**합니다. 실제 원본 폴더·파일이나 이미 이동한 파일은 삭제하지 않습니다. 중복 옵션·오타·알 수 없는 값은 거부합니다. help에서 각 명령을 확인하세요.
@@ -102,8 +102,8 @@ remove는 **등록 설정만 제거**합니다. 실제 원본 폴더·파일이�
 ## 프로그램 감지: watch
 
 ```powershell
-.\Chagok-v0.6.0.exe rules update --folder 다운로드 --rule "PDF 정리" --enabled on --trigger stop --program "C:\앱\tool.exe" --mode confirm
-.\Chagok-v0.6.0.exe watch --folder 다운로드
+.\Chagok-v0.6.6.exe rules update --folder 다운로드 --rule "PDF 정리" --enabled on --trigger stop --program "C:\앱\tool.exe" --mode confirm
+.\Chagok-v0.6.6.exe watch --folder 다운로드
 ```
 
 확인 모드는 요청을 보류합니다. --json을 사용하지 않는 대화형 터미널에서는 Enter로 목록을 열고 선택 후 이동합니다. 리디렉션에서는 확인 요청을 자동 실행하지 않으며 Ctrl+C로 watch를 끝낸 뒤 run 등으로 직접 처리해야 합니다. 확인 요청이 앞에 있으면 뒤의 자동 요청도 대기합니다.
@@ -126,32 +126,32 @@ watch 또는 TUI 감지 화면이 실행 중인 동안만 감지합니다. 일�
 
 ## 블록 로고와 색상
 
-0.6.0 상단 로고는 █/▀/▄ 블록 문자로 앱 심볼과 CHAGOK을 표시합니다. 심볼과 글자는 청록색입니다. 실제 색과 글자 모양은 터미널 팔레트·폰트에 따라 달라집니다. 밝은 배경에서는 어두운 청록을 사용하며 본문은 원래 글자색을 유지합니다. NO_COLOR 환경 변수가 있으면 색을 끕니다. 권장 환경은 고정폭 글꼴을 사용하는 Windows Terminal입니다.
+0.6.6 상단 로고는 █/▀/▄ 블록 문자로 앱 심볼과 CHAGOK을 표시합니다. 심볼과 글자는 청록색입니다. 실제 색과 글자 모양은 터미널 팔레트·폰트에 따라 달라집니다. 밝은 배경에서는 어두운 청록을 사용하며 본문은 원래 글자색을 유지합니다. NO_COLOR 환경 변수가 있으면 색을 끕니다. 권장 환경은 고정폭 글꼴을 사용하는 Windows Terminal입니다.
 
-## 0.6.0 규칙 추가와 개별 실행
+## 0.6.6 규칙 추가와 개별 실행
 
 N으로 규칙을 추가하면 선택 검사 폴더 이름과 전체 경로를 먼저 표시하고 저장 확인에서도 반복합니다. 긴 경로는 줄을 바꿔 전체 표시합니다. Tab → ↑↓로 규칙 선택 → R 이 규칙만 검사 및 실행 → 미리보기에서 Enter → Y가 개별 이동 순서입니다. R은 왼쪽 영역에서도 현재 선택 규칙만 검사합니다. A는 폴더 전체입니다.
 
 TUI 상단은 굵은 획과 청록 단색을 사용합니다. 80열 미만은 심볼 없이 이름을 표시해 글자가 잘리지 않도록 합니다. GUI 아이콘은 이 변경의 대상이 아닙니다.
 
-새 배포 실행 파일은 Chagok-v0.6.0.exe입니다. 시작 인수·설정 경로는 유지합니다. 내부 어셈블리와 개발 빌드 이름 Chagok은 유지하며 단일 파일 publish 결과에 버전을 붙입니다.
+새 배포 실행 파일은 Chagok-v0.6.6.exe입니다. 시작 인수·설정 경로는 유지합니다. 내부 어셈블리와 개발 빌드 이름 Chagok은 유지하며 단일 파일 publish 결과에 버전을 붙입니다.
 
-## 0.6.0 입력 중 돌아가기
+## 0.6.6 입력 중 돌아가기
 
 폴더·규칙 텍스트 입력창의 Esc 또는 /cancel + Enter는 그 항목의 편집만 취소합니다. 폼 목록의 Esc는 전체 초안을 취소합니다. 설정 화면은 Esc로 변경을 취소합니다. Ctrl+C는 앱 종료용입니다.
 
 좌우 방향키·Home/End로 커서를 옮기고 Delete/Backspace로 수정합니다. 긴 경로는 입력 중 가로로 이동합니다. Enter는 해당 칸의 입력 완료이며 빈 입력은 기존 값을 유지합니다.
 
-## 0.6.0 기능 설명
+## 0.6.6 기능 설명
 
 메인과 미리보기에서 F1 또는 ?를 누르면 현재 영역과 관련된 기능 설명을 엽니다. ←→로 기능을 바꾸고 ↑↓/PgUp/PgDn으로 읽습니다. Esc는 선택·검사 결과를 유지하고 원래 화면으로 돌아갑니다. 입력 폼에서는 기존 Esc 취소를 사용합니다.
 
 ```powershell
-.\Chagok-v0.6.0.exe help
-.\Chagok-v0.6.0.exe help run
-.\Chagok-v0.6.0.exe rules add --help
-.\Chagok-v0.6.0.exe help --json
-.\Chagok-v0.6.0.exe help rules add --json
+.\Chagok-v0.6.6.exe help
+.\Chagok-v0.6.6.exe help run
+.\Chagok-v0.6.6.exe rules add --help
+.\Chagok-v0.6.6.exe help --json
+.\Chagok-v0.6.6.exe help rules add --json
 ```
 
 JSON은 schemaVersion·commands·commonOptions·safety·exitCodes를 포함합니다. 명령에는 usage·effects·confirmation·windowsOnly·options·examples·notes가 있습니다. 옵션의 type·required·default·choices를 확인하세요. null 기본값은 해당 문맥의 기존 값/명령 기본값을 따르며 notes를 함께 읽어야 합니다.
@@ -170,7 +170,7 @@ JSON은 schemaVersion·commands·commonOptions·safety·exitCodes를 포함합�
 설정(S)은 항목 선택형입니다. ↑↓/Tab 또는 1~4로 원하는 항목을 바로 선택하고 ←→/Enter/Space로 값을 바꿉니다. S는 저장, Esc는 변경 취소입니다. 설정 화면의 GUI 테마는 TUI 색상을 바꾸지 않습니다.
 
 
-0.6.0부터 폴더/규칙 생성·편집·복제도 목록형입니다. 폴더/규칙 폼은 ↑↓/Tab/1~9로 항목 선택, Enter/E 텍스트 편집, ←→ 선택값 변경, I 전체 값 확인입니다. S 검토 후 Y 저장. 입력칸 Esc는 항목 취소, 목록 Esc는 전체 폼 취소입니다. 검토 화면에서 Esc를 누르면 초안을 유지한 채 항목 목록으로 돌아갑니다. 사용하지 않는 조건의 값은 보존합니다.
+0.6.6부터 폴더/규칙 생성·편집·복제도 목록형입니다. 폴더/규칙 폼은 ↑↓/Tab/1~9로 항목 선택, Enter/E 텍스트 편집, ←→ 선택값 변경, I 전체 값 확인입니다. S 검토 후 Y 저장. 입력칸 Esc는 항목 취소, 목록 Esc는 전체 폼 취소입니다. 검토 화면에서 Esc를 누르면 초안을 유지한 채 항목 목록으로 돌아갑니다. 사용하지 않는 조건의 값은 보존합니다.
 
 ## 최근 이동 위치와 규칙명 폴더
 
@@ -186,12 +186,12 @@ TUI에서 새 규칙을 만들 때 최근 위치 표시가 켜져 있으면 가�
 
 ## 파일명 분석
 
-메인 화면 P로 등록 폴더 전체를 분석합니다. Tab/←→로 폴더·그룹·파일을 선택하고 ↑↓로 이동합니다. N/P 페이지, M 2개 이상/전체, B 괄호, E 직접 정규식, S 하위 폴더, R 다시 분석, I 전체 값, W 경고, C 선택 그룹으로 규칙 만들기, Esc 복귀입니다. 넓은 화면은 세 영역, 좁은 화면은 현재 영역을 표시합니다.
+메인 화면 P로 등록 폴더 전체를 분석합니다. Tab/←→로 폴더·그룹·파일을 선택하고 ↑↓로 이동합니다. N/P 페이지, M 2개 이상/전체, G 조건으로 선택, E 직접 정규식, S 하위 폴더, R 다시 분석, I 전체 값, W 경고, C 선택 그룹으로 규칙 만들기, Esc 복귀입니다. 넓은 화면은 세 영역, 좁은 화면은 현재 영역을 표시합니다.
 
 ```powershell
-.\Chagok-v0.6.0.exe analyze --folder 다운로드 --minimum 2 --json
-.\Chagok-v0.6.0.exe analyze --folder 다운로드 --group "[a]" --file-page 1 --json
-.\Chagok-v0.6.0.exe analyze --brackets round --recursive on --json
+.\Chagok-v0.6.6.exe analyze --folder 다운로드 --minimum 2 --json
+.\Chagok-v0.6.6.exe analyze --folder 다운로드 --group "[a]" --file-page 1 --json
+.\Chagok-v0.6.6.exe analyze --brackets round --recursive on --json
 ```
 
 폴더 생략 시 등록 폴더 전체의 구분값을 합산합니다. 기본은 square·하위 폴더 제외·최소 1개입니다. --page와 --file-page는 1부터 시작하며 100개씩 읽습니다. 경고가 있으면 종료 코드 4와 부분 집계를 반환합니다. 같은 파일의 같은 값은 한 번 세지만 여러 다른 값은 각 그룹에 포함합니다. 분석은 파일·설정·기록을 바꾸지 않고 종료 시 임시 DB를 정리합니다.
@@ -200,11 +200,21 @@ TUI에서 새 규칙을 만들 때 최근 위치 표시가 켜져 있으면 가�
 
 ### 직접 입력 정규식
 
-분석 화면 **E**를 누르면 정규식·시험 파일명·미리보기 그룹을 직접 선택하는 폼이 열립니다. I로 입력 방법과 예시를 확인하세요. S 검토 뒤 Y로 재분석하고 Esc로 취소합니다. B를 누르면 괄호 기본 모드로 돌아갑니다.
+분석 화면 **E**를 누르면 정규식·시험 파일명·미리보기 그룹을 직접 선택하는 폼이 열립니다. I로 입력 방법과 예시를 확인하세요. S 검토 뒤 Y로 재분석하고 Esc로 취소합니다. G (또는 호환 키 B)로 조건 폼을 열어 괄호 종류와 제한 여부를 고를 수 있습니다.
 
 ```powershell
-.\Chagok-v0.6.0.exe analyze --folder 다운로드 --regex '\[(?<group>[^\]]+)\]' --group a --json
-.\Chagok-v0.6.0.exe rules add --folder 다운로드 --name 업무 --destination D:\정리 --match group --pattern 업무 --group-expression '^(?<group>[^_]+)_'
+.\Chagok-v0.6.6.exe analyze --folder 다운로드 --regex '\[(?<group>[^\]]+)\]' --group a --json
+.\Chagok-v0.6.6.exe rules add --folder 다운로드 --name 업무 --destination D:\정리 --match group --pattern 업무 --group-expression '^(?<group>[^_]+)_'
 ```
 
-`(?<group>...)`의 캡처 값 또는 전체 일치 값을 묶습니다. 빈 값은 제외하며 추출한 값의 대소문자·공백은 유지합니다. 식은 최대 2,000자이며 파일당 100ms를 넘으면 중단합니다. TUI/GUI에서 C/규칙 만들기로 생성한 초안도 식과 구분값을 함께 보관합니다. 규칙 폼 마지막 ‘분류 정규식’과 검토 화면에서 식을 확인할 수 있습니다. 식을 비우면 기존 괄호 구분값 기준으로 돌아갑니다. 실제 이동은 별도 검사와 실행 승인이 필요합니다.
+`(?<group>...)`의 캡처 값 또는 전체 일치 값을 묶습니다. 빈 값은 제외하며 추출한 값의 대소문자·공백은 유지합니다. 식은 최대 2,000자이며 파일당 100ms를 넘으면 중단합니다. TUI/GUI에서 C/규칙 만들기로 생성한 초안도 식과 구분값을 함께 보관합니다. 규칙 폼 마지막 ‘분류 정규식’과 검토 화면에서 식을 확인할 수 있습니다. 조건 정보 없이 직접 식을 비우면 기존 괄호 구분값 기준으로 돌아갑니다. 제한 없음 조건이 저장된 규칙은 식이 비어 있어도 괄호 포함 여부를 조건 정보에서 읽습니다. 실제 이동은 별도 검사와 실행 승인이 필요합니다.
+
+### 조건으로 분류하기 · 0.6.6
+
+분석 화면에서 **G**를 누르면 괄호 종류, 내용 제한 없음/조건 지정, 그룹 이름에 괄호 포함 여부를 고르는 폼이 열립니다. 조건을 추가/제거할 수 있습니다. I로 항목 설명과 긴 값을 확인하고 시험할 파일명·미리보기·생성 정규식도 같은 폼에서 확인하세요. S 검토 → Y 적용 시 다시 분석하며 Esc는 초안을 취소합니다. 조건 지정에서는 하나라도/모두, 조건 종류·값을 설정합니다. 제한 없음으로 바꿔도 입력한 조건은 유지됩니다. E는 직접 정규식 입력이며 B는 G와 같은 조건 폼을 엽니다.
+
+조건의 값은 정규식이 아닌 문자 그대로입니다. 예를 들어 시작 x 또는 정확 y는 [xyz]/[x]/[y]를 찾고 [yellow]는 제외합니다. 조건으로 만든 규칙의 조건 목록은 규칙 폼에서도 다시 편집합니다. 직접 식을 수정하면 저장 조건은 직접 입력으로 전환합니다. 조건 조회/변경/검토는 파일 이동 승인이 아닙니다. CLI에서 같은 식을 --regex로 사용할 수 있으며 직접 식 변경은 --group-expression을 사용합니다.
+
+0.6.6의 예시/직접 연습 탭과 강조 편집은 GUI 입력 방법 창의 안내 기능입니다. TUI G의 통합 조건과 E 직접 식을 사용할 수 있으며 기존 예시/직접 연습은 유지됩니다.
+
+그룹 이름에 괄호 포함을 켜면 `[업무]`, 끄면 `업무`로 묶습니다. 내용 제한 없음은 기존처럼 빈/중첩/닫히지 않은 괄호를 제외하며 별도 정규식을 만들지 않습니다. GUI/TUI 미리보기와 실제 분석, 그 결과로 만든 규칙이 같은 기준을 사용합니다. 기존 CLI `--brackets`/`--regex` 명령은 유지합니다.

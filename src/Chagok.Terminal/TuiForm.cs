@@ -19,11 +19,14 @@ internal sealed class TuiForm(string title, Func<(string Name, string Path)> con
 
     private string status = "아직 저장하지 않았습니다.";
 
-    internal bool Run(IReadOnlyList<Field> fields, string confirmation, Func<int, IReadOnlyList<string>> review, Action save, string help)
+    internal bool Run(IReadOnlyList<Field> fields, string confirmation, Func<int, IReadOnlyList<string>> review, Action save, string help,
+        Func<IReadOnlyList<Field>>? refreshFields = null)
     {
         var selected = 0; var first = 0;
         while (true)
         {
+            if (refreshFields is not null) fields = refreshFields();
+            selected = Math.Clamp(selected, 0, fields.Count - 1);
             var width = Math.Min(100, TerminalText.Width);
             var rows = Header(width);
             var count = Math.Max(1, TerminalText.Height - rows.Count - 11);

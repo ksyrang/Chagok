@@ -7,7 +7,7 @@ namespace FileOrganizer.Core;
 
 [JsonConverter(typeof(JsonStringEnumConverter<BracketKind>))]
 public enum BracketKind { Square, Round, Curly }
-public sealed record AnalysisOptions(BracketKind Brackets = BracketKind.Square, bool Recursive = false, string CustomPattern = "");
+public sealed record AnalysisOptions(BracketKind Brackets = BracketKind.Square, bool Recursive = false, string CustomPattern = "", FilenameConditionSet? Conditions = null);
 public sealed record AnalysisFolder(Guid Id, string Name, string Path, long Total, long Matched, long Groups, long Warnings)
 {
     public long Unmatched => Total - Matched;
@@ -37,6 +37,9 @@ public static class FilenameGroups
     public static void Validate(AnalysisOptions options)
     {
         _ = Pair(options.Brackets);
+        if (options.Conditions is { } conditions && (conditions.Brackets != options.Brackets
+            || !string.Equals(conditions.Compile(), options.CustomPattern, StringComparison.Ordinal)))
+            throw new ArgumentException("분류 조건과 생성된 정규식이 다릅니다. 조건을 다시 적용하세요.");
         if (options.CustomPattern.Length > 0) _ = Expression(options.CustomPattern);
     }
     private static Regex Expression(string pattern)
@@ -46,13 +49,27 @@ public static class FilenameGroups
         try { return new Regex(pattern, RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100)); }
         catch (ArgumentException ex) { throw new ArgumentException("분류 정규식을 확인하세요. " + ex.Message, ex); }
     }
-    public static string Description(AnalysisOptions options) => options.CustomPattern.Length > 0
+    public static string Description(AnalysisOptions options) => options.Conditions is { } conditions
+        ? "조건: " + conditions.Summary : options.CustomPattern.Length > 0
         ? "직접 입력: " + options.CustomPattern : $"{Pair(options.Brackets).Open} {Pair(options.Brackets).Close}";
 
     public static IReadOnlySet<string> Extract(string name, AnalysisOptions options)
     {
-        if (options.CustomPattern.Length == 0) return Extract(name, options.Brackets);
+        if (options.CustomPattern.Length == 0)
+        {
+            var values = Extract(name, options.Brackets);
+            return options.Conditions is { IncludeBrackets: false }
+                ? values.Select(value => value[1..^1]).ToHashSet(StringComparer.Ordinal) : values;
+        }
         return ExtractRegex(name, options.CustomPattern);
+    }
+
+    public static FilenamePatternPreview Preview(string name, AnalysisOptions options)
+    {
+        Validate(options);
+        return options.CustomPattern.Length == 0
+            ? new(Extract(name, options.Brackets).ToArray(), Extract(name, options))
+            : Preview(name, options.CustomPattern);
     }
 
     public static FilenamePatternPreview Preview(string name, string pattern)
@@ -119,9 +136,11 @@ public static class FilenameGroups
     {
         Validate(options);
         if (string.IsNullOrWhiteSpace(key)) throw new ArgumentException("구분값은 비워 둘 수 없습니다.");
-        if (options.CustomPattern.Length == 0 && ValidateKey(key) != options.Brackets) throw new ArgumentException("분석 조건과 구분값의 괄호가 다릅니다.");
-        return new() { Name = options.CustomPattern.Length == 0 ? key[1..^1] : key, Match = NameMatch.Group, Pattern = key,
+        var wrapped = options.CustomPattern.Length == 0 && options.Conditions?.IncludeBrackets != false;
+        if (wrapped && ValidateKey(key) != options.Brackets) throw new ArgumentException("분석 조건과 구분값의 괄호가 다릅니다.");
+        return new() { Name = wrapped ? key[1..^1] : key, Match = NameMatch.Group, Pattern = key,
             GroupExpression = options.CustomPattern,
+            GroupConditions = options.Conditions is null ? null : Storage.Clone(options.Conditions),
             Recursive = options.Recursive, Destination = DestinationPaths.Initial(folder) };
     }
 }

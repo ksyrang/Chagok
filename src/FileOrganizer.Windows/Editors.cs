@@ -102,10 +102,37 @@ internal sealed class RuleEditor : Window
         match.SelectionChanged += (_, _) => pattern.IsEnabled = match.SelectedIndex != (int)NameMatch.Any;
         pattern.IsEnabled = rule.Match != NameMatch.Any;
         var expression = EditorUi.Input(rule.GroupExpression);
+        var groupConditions = rule.GroupConditions;
+        var updatingExpression = false;
         var expressionFields = new StackPanel();
-        EditorUi.Field(expressionFields, "분류 정규식 (비우면 괄호 구분값)", expression);
+        EditorUi.Field(expressionFields, "분류 정규식 (조건 선택 시 자동 설정)", expression);
         expression.ToolTip = FilenameGroups.PatternHelp;
-        EditorUi.Hint(expressionFields, "추출한 값이 위 구분값과 정확히 같은 파일을 찾습니다. 비우면 괄호 기준으로 비교합니다. 입력칸에 마우스를 올리면 입력 예시를 볼 수 있습니다.");
+        EditorUi.Hint(expressionFields, "추출한 값이 위 구분값과 정확히 같은 파일을 찾습니다. 선택한 조건은 아래 요약에서 확인하세요. 조건 정보 없이 식을 비우면 [a] 같은 괄호 구분값으로 비교합니다.");
+        var conditionSummary = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 14, Margin = new(0, 0, 0, 8) };
+        AutomationProperties.SetName(conditionSummary, "규칙의 괄호 안 분류 조건");
+        void UpdateConditionSummary() => conditionSummary.Text = groupConditions is null
+            ? "조건 선택으로 식을 만들거나, 위 정규식을 직접 입력할 수 있습니다. 직접 입력한 식은 조건으로 자동 변환하지 않습니다."
+            : "선택한 조건: " + groupConditions.Summary;
+        UpdateConditionSummary();
+        expression.TextChanged += (_, _) =>
+        {
+            if (updatingExpression) return;
+            groupConditions = null; UpdateConditionSummary();
+        };
+        expressionFields.Children.Add(conditionSummary);
+        var editConditions = EditorUi.Button("조건 설정", (_, _) =>
+        {
+            var editor = new FilenameConditionEditor(this, groupConditions);
+            if (editor.ShowDialog() != true || editor.Result is not { } value) return;
+            updatingExpression = true;
+            try { expression.Text = value.Compile(); groupConditions = value; }
+            finally { updatingExpression = false; }
+            UpdateConditionSummary();
+        });
+        editConditions.HorizontalAlignment = HorizontalAlignment.Left; editConditions.Margin = new(0, 0, 0, 12);
+        AutomationProperties.SetName(editConditions, "규칙의 괄호 안 분류 조건 설정");
+        expressionFields.Children.Add(editConditions);
+        EditorUi.Hint(expressionFields, "조건을 적용하면 이 규칙의 분류 정규식을 바꿉니다. 위 구분값과 정확히 같은 그룹만 규칙에 포함합니다. 정규식을 직접 바꾸면 선택한 조건 정보는 해제됩니다.");
         form.Children.Add(expressionFields);
         void UpdateExpression() => expressionFields.Visibility = match.SelectedIndex == (int)NameMatch.Group ? Visibility.Visible : Visibility.Collapsed;
         match.SelectionChanged += (_, _) => UpdateExpression(); UpdateExpression();
@@ -213,7 +240,8 @@ internal sealed class RuleEditor : Window
             {
                 rule.Name = name.Text.Trim(); rule.Enabled = enabled.IsChecked == true;
                 rule.Recursive = recursive.IsChecked == true; rule.Match = (NameMatch)match.SelectedIndex;
-                rule.Pattern = rule.Match == NameMatch.Group && expression.Text.Length > 0 ? pattern.Text : pattern.Text.Trim(); rule.GroupExpression = expression.Text; rule.Extensions = extensions.Text.Trim();
+                rule.Pattern = rule.Match == NameMatch.Group ? pattern.Text : pattern.Text.Trim(); rule.GroupExpression = expression.Text; rule.Extensions = extensions.Text.Trim();
+                rule.GroupConditions = rule.Match == NameMatch.Group ? groupConditions : null;
                 rule.Destination = PathSafety.Normalize(baseDestination.Trim());
                 rule.AppendRuleName = appendName.IsChecked == true;
                 rule.CreateDestination = createChoice; rule.Conflict = (ConflictMode)conflict.SelectedIndex;

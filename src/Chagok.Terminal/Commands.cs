@@ -52,7 +52,7 @@ public sealed class Commands(TerminalSession session, IRecycleBin recycle, Cance
                 if (route == "rules add") { _ = args.Require("name"); _ = args.Require("destination"); _ = args.Require("match"); }
                 rule.Name = args.Get("name") ?? rule.Name; rule.Destination = args.Get("destination") ?? rule.Destination;
                 rule.Pattern = args.Get("pattern") ?? rule.Pattern;
-                rule.GroupExpression = args.Get("group-expression") ?? rule.GroupExpression; rule.Extensions = args.Get("extensions") ?? rule.Extensions;
+                if (args.Get("group-expression") is { } expression) { rule.GroupExpression = expression; rule.GroupConditions = null; } rule.Extensions = args.Get("extensions") ?? rule.Extensions;
                 if (args.Get("match") is { } match) rule.Match = Choice(match, new Dictionary<string, NameMatch> { ["any"] = NameMatch.Any, ["contains"] = NameMatch.Contains, ["starts"] = NameMatch.StartsWith, ["glob"] = NameMatch.Glob, ["group"] = NameMatch.Group });
                 if (args.Get("conflict") is { } conflict) rule.Conflict = Choice(conflict, new Dictionary<string, ConflictMode> { ["rename"] = ConflictMode.Rename, ["replace"] = ConflictMode.Replace, ["skip"] = ConflictMode.Skip });
                 rule.Enabled = args.Boolean("enabled", rule.Enabled); rule.Recursive = args.Boolean("recursive", rule.Recursive);

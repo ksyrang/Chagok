@@ -67,7 +67,10 @@ public static class PathSafety
         _ = RuleMatcher.ParseExtensions(rule.Extensions);
         if (rule.Match == NameMatch.Group)
         {
-            if (rule.GroupExpression.Length == 0) _ = FilenameGroups.ValidateKey(rule.Pattern);
+            if (rule.GroupConditions is { } conditions && !string.Equals(conditions.Compile(), rule.GroupExpression, StringComparison.Ordinal))
+                throw new ArgumentException("저장할 분류 조건과 정규식이 다릅니다. 조건을 다시 적용하세요.");
+            if (rule.GroupConditions is { } selected) FilenameGroups.Validate(selected.ToOptions());
+            else if (rule.GroupExpression.Length == 0) _ = FilenameGroups.ValidateKey(rule.Pattern);
             else FilenameGroups.Validate(new AnalysisOptions(CustomPattern: rule.GroupExpression));
         }
         if (rule.Trigger != TriggerMode.Manual)

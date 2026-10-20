@@ -2,4 +2,5 @@
  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework></PropertyGroup>
  <ItemGroup><ProjectReference Include="../../src/FileOrganizer.Core/FileOrganizer.Core.csproj"/><ProjectReference Include="../../src/Chagok.Terminal/Chagok.Terminal.csproj"/></ItemGroup>
  <ItemGroup><Compile Include="../../src/FileOrganizer.Windows/ViewRows.cs" Link="Presentation/ViewRows.cs" /></ItemGroup>
+ <ItemGroup><Compile Include="../../src/FileOrganizer.Windows/AnalysisAccordionState.cs" Link="Presentation/AnalysisAccordionState.cs" /></ItemGroup>
 </Project>

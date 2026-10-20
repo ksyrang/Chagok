@@ -32,6 +32,8 @@ public static class TuiDetails
             ("하위 폴더 검사", rule.Recursive ? "포함" : "포함하지 않음"));
         if (rule.Match == NameMatch.Group && rule.GroupExpression.Length > 0)
             Section(lines, width, "분류 정규식", ("입력한 식", rule.GroupExpression));
+        if (rule.Match == NameMatch.Group && rule.GroupConditions is { } conditions)
+            Section(lines, width, "분류 조건 선택", ("조건 요약", conditions.Summary), ("정확히 비교할 그룹", rule.Pattern));
         Section(lines, width, "03 · 이동 동작", ("기본 이동 위치", rule.Destination),
             ("규칙명 폴더 추가", rule.AppendRuleName ? "켜짐" : "꺼짐"),
             ("최종 이동 폴더", DestinationPaths.Preview(rule)),

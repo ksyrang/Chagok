@@ -53,7 +53,8 @@ try:
  assert '[a]' in frame and '패턴 일치 4' in frame
  send('?','기능 도움말');send('\x1b','C 이 그룹으로 규칙 만들기')
  send('m','전체 그룹');send('m','2개 이상만')
- send('b','분류 ( )');send('b','분류 { }');send('b','분류 [ ]')
+ for expected in ['( )','{ }','[ ]']:
+  send('g','분류 조건 선택');send('e','항목 선택');send('s','이 분류 조건을 적용할까요');frame=send('y','C 이 그룹으로 규칙 만들기');assert expected in frame,frame
  send('s','하위 폴더 포함');frame=send('s','하위 폴더 제외')
  # 정규식 입력 방법/미리보기, 잘못된 입력 저장 차단, 취소 후 기존 결과 유지.
  send('e','분류 정규식');send('e','입력 · 분류 정규식')

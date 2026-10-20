@@ -27,7 +27,9 @@ public static class RuleMatcher
             NameMatch.Contains => name.Contains(rule.Pattern, StringComparison.OrdinalIgnoreCase),
             NameMatch.StartsWith => name.StartsWith(rule.Pattern, StringComparison.OrdinalIgnoreCase),
             NameMatch.Glob => FileSystemName.MatchesSimpleExpression(rule.Pattern, name, ignoreCase: true),
-            NameMatch.Group => (rule.GroupExpression.Length == 0
+            NameMatch.Group => (rule.GroupConditions is { } conditions
+                ? FilenameGroups.Extract(name, new AnalysisOptions(conditions.Brackets, CustomPattern: rule.GroupExpression, Conditions: conditions))
+                : rule.GroupExpression.Length == 0
                 ? FilenameGroups.Extract(name, FilenameGroups.ValidateKey(rule.Pattern))
                 : FilenameGroups.Extract(name, new AnalysisOptions(CustomPattern: rule.GroupExpression))).Contains(rule.Pattern),
             _ => false
