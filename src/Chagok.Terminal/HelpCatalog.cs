@@ -10,7 +10,7 @@ public sealed record CommandHelp(string Name, string Title, string Description, 
 
 public static class HelpCatalog
 {
-    public const string Version = "0.9.0";
+    public const string Version = "0.10.1";
     public const string Executable = "Chagok.exe";
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
