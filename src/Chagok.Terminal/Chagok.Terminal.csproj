@@ -1,14 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
  <PropertyGroup>
   <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
-  <AssemblyName>chagok-cli</AssemblyName><Version>0.8.0</Version>
+  <AssemblyName>chagok-cli</AssemblyName><Version>0.9.0</Version>
   <Product>차곡 터미널</Product><Authors>ksyrang</Authors>
  </PropertyGroup>
  <ItemGroup>
-  <ProjectReference Include="../FileOrganizer.Core/FileOrganizer.Core.csproj"/>
+  <ProjectReference Include="../Chagok.Core/Chagok.Core.csproj"/>
   <PackageReference Include="System.Management" Version="10.0.9"/>
-  <Compile Include="../FileOrganizer.Windows/WindowsRecycleBin.cs" Link="Windows/WindowsRecycleBin.cs"/>
-  <Compile Include="../FileOrganizer.Windows/ProgramMonitor.cs" Link="Windows/ProgramMonitor.cs"/>
-  <Compile Include="../FileOrganizer.Windows/ProcessReader.cs" Link="Windows/ProcessReader.cs"/>
+  <Compile Include="../Chagok.Windows/WindowsRecycleBin.cs" Link="Windows/WindowsRecycleBin.cs"/>
+  <Compile Include="../Chagok.Windows/ProgramMonitor.cs" Link="Windows/ProgramMonitor.cs"/>
+  <Compile Include="../Chagok.Windows/ProcessReader.cs" Link="Windows/ProcessReader.cs"/>
  </ItemGroup>
 </Project>

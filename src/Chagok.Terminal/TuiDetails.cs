@@ -1,4 +1,4 @@
-using FileOrganizer.Core;
+using Chagok.Core;
 
 namespace Chagok.Terminal;
 

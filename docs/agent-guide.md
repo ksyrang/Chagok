@@ -1,6 +1,6 @@
 # 차곡을 CLI로 사용하는 AI·자동화 가이드 · 0.5.6
 
-먼저 `cli-reference.json` 또는 `Chagok-v0.5.6.exe help --json`을 읽습니다. AI 모델 연결이나 승인 대행 기능은 없습니다. 외부 도구가 기존 CLI를 사용하는 방식입니다.
+먼저 `cli-reference.json` 또는 `Chagok.exe help --json`을 읽습니다. AI 모델 연결이나 승인 대행 기능은 없습니다. 외부 도구가 기존 CLI를 사용하는 방식입니다.
 
 ## 사용 순서
 

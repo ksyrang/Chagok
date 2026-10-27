@@ -39,7 +39,7 @@
 - `assets/branding/chagok-approved-board-v2.png`: 사용자가 첨부한 새 시안 원본과 SHA256 일치.
 - 앱 아이콘은 사용자 시안을 기준으로 이미지 생성 도구로 정리한 파생 자산이며, PNG·ICO·탐색기 로고로 변환했다. 자세한 생성 경위는 [브랜딩 기록](../assets/branding/README.md)을 따른다.
 - TUI의 심볼과 CHAGOK 이름은 문자 데이터다. Forel의 이미지 파일을 실행 중 불러오지 않는다.
-- 차곡은 .NET/WPF와 `Microsoft.Data.Sqlite`, `System.Management` 등을 사용한다. 네이티브 탐색기 확장에는 MinGW-w64 런타임 관련 고지가 포함되어 있다. 이는 Forel 재사용과 별개인 외부 구성 요소다. [기존 고지](../src/FileOrganizer.Windows/Assets/Shell/ShellExtension-LICENSES.txt)를 유지했다.
+- 차곡은 .NET/WPF와 `Microsoft.Data.Sqlite`, `System.Management` 등을 사용한다. 네이티브 탐색기 확장에는 MinGW-w64 런타임 관련 고지가 포함되어 있다. 이는 Forel 재사용과 별개인 외부 구성 요소다. [기존 고지](../src/Chagok.Windows/Assets/Shell/ShellExtension-LICENSES.txt)를 유지했다.
 
 ## 해석의 한계
 

@@ -11,7 +11,7 @@ trap 'rm -rf -- "$task_build"' EXIT
  -lole32 -lshell32 -ladvapi32 -luuid -o "$task_build/Chagok.ShellExtension.dll"
 # 외장 드라이브에 링커가 직접 출력한 파일이 나중에 0으로 변한 사례가 있어,
 # 임시 디스크에서 완료한 PE를 일반 쓰기·동기화로 복사하고 해시를 재확인한다.
-python3 - "$task_build/Chagok.ShellExtension.dll" "$task_root/src/FileOrganizer.Windows/Assets/Shell/Chagok.ShellExtension.dll" <<'PY'
+python3 - "$task_build/Chagok.ShellExtension.dll" "$task_root/src/Chagok.Windows/Assets/Shell/Chagok.ShellExtension.dll" <<'PY'
 from pathlib import Path
 import hashlib, os, struct, sys
 source, destination = map(Path, sys.argv[1:])

@@ -4,7 +4,7 @@
 
 - 앱 이름: 차곡 / CHAGOK, 제작자: by ksyrang
 - 새 아이콘 파생 원본: `chagok-icon-v2-source.png`
-- PNG·ICO: `../../src/FileOrganizer.Windows/Assets/chagok.png`, `chagok.ico`
+- PNG·ICO: `../../src/Chagok.Windows/Assets/chagok.png`, `chagok.ico`
 - ICO 크기: 16·20·24·32·40·48·64·128·256px
 - 적용: EXE·창·작업 표시줄·트레이·메인 상단·탐색기 패키지 로고·HTML 매뉴얼
 

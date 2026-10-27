@@ -10,8 +10,8 @@ public sealed record CommandHelp(string Name, string Title, string Description, 
 
 public static class HelpCatalog
 {
-    public const string Version = "0.8.0";
-    public const string Executable = "Chagok-v0.8.0.exe";
+    public const string Version = "0.9.0";
+    public const string Executable = "Chagok.exe";
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
     private static OptionHelp O(string name, string description, bool required = false, string type = "string", string? fallback = null, params string[] choices)
@@ -38,9 +38,9 @@ public static class HelpCatalog
         O("enabled", "규칙 사용 여부", false, "boolean", null, "on", "off", "true", "false"), ..Trigger];
     public static IReadOnlyList<OptionHelp> CommonOptions { get; } = Array.AsReadOnly(new[] {
         O("json", "결과를 JSON으로 출력합니다. TUI에서는 사용할 수 없습니다. watch는 NDJSON입니다.", type: "flag", fallback: "false"),
-        O("data-dir", "별도 설정·기록 폴더의 전체 경로. 기본값은 GUI와 같은 %LOCALAPPDATA%\\FileOrganizer입니다. help/version은 설정을 읽지 않습니다.", type: "absolutePath") });
+        O("data-dir", "별도 설정·기록 폴더의 전체 경로. 기본값은 GUI와 같은 %LOCALAPPDATA%\\Chagok입니다. 기본 위치 첫 실행은 기존 FileOrganizer의 설정·기록을 원본 보존 후 가져옵니다. 별도 --data-dir 위치는 자동 가져오기를 하지 않습니다. help/version/path는 설정을 읽지 않습니다.", type: "absolutePath") });
     public static IReadOnlyList<string> Safety { get; } = Array.AsReadOnly(new[] {
-        "GUI·CLI·TUI는 같은 설정을 사용하며 한 번에 하나만 실행합니다. 트레이 GUI도 실행 중입니다. help/version은 예외입니다.",
+        "GUI·CLI·TUI는 같은 설정을 사용하며 한 번에 하나만 실행합니다. 트레이 GUI도 실행 중입니다. help/version/path는 예외입니다.",
         "scan은 파일을 이동하지 않습니다. run은 이전 scan을 재사용하지 않고 새로 검사합니다.",
         "--yes는 현재 페이지가 아니라 전체 실행 가능한 항목을 승인합니다. 파일 이동과 설정 제거는 사용자 승인 범위에서 실행하세요.",
         "같은 이름이 여러 개면 전체 ID를 사용합니다. update에서 생략한 값은 유지합니다.",
@@ -56,6 +56,9 @@ public static class HelpCatalog
     private static OptionHelp[] Required(OptionHelp[] fields, params string[] names)
         => fields.Select(o => names.Contains(o.Name) ? o with { Required = true } : o).ToArray();
     public static IReadOnlyList<CommandHelp> Commands { get; } = Array.AsReadOnly(new[] {
+        C("path add", "터미널 명령 등록", "현재 Chagok.exe 폴더를 사용자 PATH에 등록합니다. 관리자 권한은 필요하지 않습니다.", "path add", ["사용자 PATH 변경"], "명령 실행으로 등록", [], ["path add"], ["Windows 배포본 Chagok.exe에서 실행하세요. 터미널 앱을 완전히 종료한 뒤 다시 열면 어느 폴더에서든 chagok tui를 실행할 수 있습니다.", "실행 파일을 옮기기 전 기존 위치에서 path remove를 실행하고 새 위치에서 다시 등록하세요. 설정·기록·검사 폴더는 바꾸지 않습니다."], windows: true),
+        C("path status", "터미널 명령 등록 조회", "현재 Chagok.exe 폴더의 사용자 PATH 등록 여부를 조회합니다. 명령 이름 충돌이나 기존 터미널의 환경 갱신 여부를 확인하는 기능은 아닙니다.", "path status", ["사용자 PATH 조회"], "없음", [], ["path status --json"], windows: true),
+        C("path remove", "터미널 명령 해제", "현재 Chagok.exe 폴더만 사용자 PATH에서 제거합니다. 다른 항목과 시스템 PATH는 유지합니다.", "path remove", ["사용자 PATH 변경"], "명령 실행으로 해제", [], ["path remove"], ["실행 파일과 설정·기록은 삭제하지 않습니다. 변경은 새로 시작한 터미널 앱에 적용됩니다."], windows: true),
         C("tui", "화면으로 사용", "시작 화면에서 1 규칙 또는 2 기준 폴더 정리를 선택합니다. 기존 규칙 대시보드와 명시 실행을 유지합니다. F1/?로 도움말을 엽니다.", "tui", ["설정 편집 가능", "확인 후 파일 이동 가능"], "이동 전 전체 선택 개수로 확인", [], ["tui"],
             ["시작 화면: ↑↓ 기본 폴더, 1/Enter 기존 규칙, 2 기준 폴더. O 또는 폴더 영역 Esc로 시작 화면 복귀.", "기준 폴더: 검사/기준 경로 설정 → 목적지 검색어 편집 → R 분석. Tab 파일/그룹, F 필터, N/P 페이지, I 상세, D 목적지 지정, H 보류, W 경고, V 이동 계획 검토. 미등록 위치는 이번에만 사용하며 영구 규칙은 저장하지 않습니다.", "P 파일명 분석. Tab 영역 전환 → ↑↓ 규칙 선택 → R 이 규칙만 검사 → Enter → Y로 이동합니다. A는 폴더 전체입니다.", "F 폴더 추가, N 규칙 추가, E 편집, Space 규칙 켜기/끄기. 입력 중 Esc는 저장하지 않고 돌아가기입니다.", "S 설정은 ↑↓/1~4로 항목을 골라 ←→/Enter/Space로 값을 바꿉니다. S 저장, Esc 변경 취소입니다.", "폴더/규칙 폼은 ↑↓/Tab/1~9로 항목 선택, Enter/E 텍스트 편집, ←→ 선택값 변경, I 전체 값 확인입니다. S 검토 후 Y 저장. 입력칸 Esc는 항목 취소, 목록 Esc는 전체 폼 취소입니다.", "대화형 터미널이 필요하며 --json은 지원하지 않습니다."]),
         C("folders list", "검사 폴더 조회", "등록된 폴더의 ID·이름·경로·규칙 개수·실행 조건을 조회합니다.", "folders list", ["설정 조회"], "없음", [], ["folders list --json"]),

@@ -1,0 +1,54 @@
+<Window x:Class="Chagok.Windows.ReferenceOrganizationWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="차곡 · 기준 폴더로 정리하기" Width="1100" Height="780" MinWidth="800" MinHeight="600" WindowStartupLocation="CenterOwner">
+ <DockPanel Margin="24">
+  <StackPanel DockPanel.Dock="Top" Margin="0,0,0,14"><TextBlock Foreground="{DynamicResource TextBrush}" Text="기준 폴더로 정리하기" FontSize="24" FontWeight="SemiBold"/><TextBlock x:Name="SourceText" TextWrapping="Wrap" Margin="0,6,0,0" Foreground="{DynamicResource SubBrush}"/></StackPanel>
+  <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+   <ScrollViewer MaxHeight="100" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><TextBlock Foreground="{DynamicResource TextBrush}" x:Name="StatusText" Text="기준 폴더를 선택하고 하위 폴더를 가져오세요. 분석만으로 파일을 이동하지 않습니다." TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/></ScrollViewer>
+   <ProgressBar x:Name="Progress" Visibility="Collapsed" Height="4" IsIndeterminate="True" Margin="0,8,0,0"/>
+   <WrapPanel HorizontalAlignment="Right" Margin="0,10,0,0"><Button x:Name="CancelWorkButton" Content="작업 취소" Click="CancelWork" Visibility="Collapsed" Margin="0,0,8,0"/><Button x:Name="CloseButton" Content="닫기" Click="CloseClick" Margin="0,0,8,0"/><Button x:Name="PlanButton" Content="이동 계획 검토" Click="ReviewPlan" Style="{StaticResource PrimaryButton}" IsEnabled="False"/></WrapPanel>
+  </StackPanel>
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False" x:Name="PageScroll">
+   <Grid Height="{Binding ViewportHeight, ElementName=PageScroll}" MinHeight="450">
+    <Grid.RowDefinitions><RowDefinition x:Name="SettingsRow" Height="*"/><RowDefinition x:Name="ResultsRow" Height="Auto"/></Grid.RowDefinitions>
+    <Expander x:Name="SettingsSection" Style="{StaticResource AnalysisSection}" Grid.Row="0" IsExpanded="True" Expanded="SettingsExpanded" Collapsed="SettingsCollapsed" HorizontalContentAlignment="Stretch" Margin="0,0,0,12">
+     <Expander.Header><StackPanel><TextBlock Foreground="{DynamicResource TextBrush}" Text="정리 설정" FontWeight="SemiBold"/><TextBlock x:Name="SettingsSummary" Text="기준 폴더와 검색어를 설정하세요." Foreground="{DynamicResource SubBrush}" TextWrapping="Wrap"/></StackPanel></Expander.Header>
+     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,10,12,0"><StackPanel>
+      <TextBlock Foreground="{DynamicResource TextBrush}" Text="검사할 폴더 · 정리할 파일이 있는 곳" Margin="0,0,0,6"/>
+      <DockPanel><Button Content="변경" Click="BrowseSource" DockPanel.Dock="Right" Margin="8,0,0,0"/><TextBox x:Name="SourceInput" TextChanged="SourceChanged" AutomationProperties.Name="검사할 폴더 전체 경로"/></DockPanel>
+      <TextBlock Foreground="{DynamicResource SubBrush}" Text="여기서 바꾼 폴더는 이번 검사에만 사용합니다. 등록된 폴더와 규칙은 변경하지 않습니다." TextWrapping="Wrap" FontSize="12" Margin="0,8,0,18"/>
+      <TextBlock Foreground="{DynamicResource TextBrush}" Text="정리된 기준 폴더" Margin="0,0,0,6"/>
+      <DockPanel><Button Content="찾아보기" Click="BrowseRoot" DockPanel.Dock="Right" Margin="8,0,0,0"/><Button x:Name="LoadButton" Content="하위 폴더 가져오기" Click="LoadTargets" DockPanel.Dock="Right" Margin="8,0,0,0"/><TextBox x:Name="RootInput" AutomationProperties.Name="정리된 기준 폴더"/></DockPanel>
+      <TextBlock Text="바로 아래 하위 폴더를 목적지로 사용합니다. 폴더명은 기본 검색어이며, 검색어는 한 줄에 하나씩 추가할 수 있습니다." TextWrapping="Wrap" Foreground="{DynamicResource SubBrush}" Margin="0,8,0,12"/>
+      <Grid Height="220"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="16"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+       <DataGrid x:Name="TargetsGrid" IsReadOnly="True" AutoGenerateColumns="False" SelectionMode="Single" SelectionChanged="TargetChanged" AutomationProperties.Name="기준 폴더의 이동 목적지"><DataGrid.Columns><DataGridTextColumn Header="하위 폴더" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="검색어" Binding="{Binding Keywords}" Width="*"/></DataGrid.Columns></DataGrid>
+       <DockPanel Grid.Column="2"><StackPanel DockPanel.Dock="Top"><TextBlock Foreground="{DynamicResource TextBrush}" x:Name="TargetPath" Text="목적지를 선택하세요." TextWrapping="Wrap" FontSize="12"/><TextBlock Foreground="{DynamicResource TextBrush}" Text="검색 방법" Margin="0,8,0,4"/><ComboBox x:Name="MatchInput" SelectedIndex="0" AutomationProperties.Name="목적지 검색 방법"><ComboBoxItem Content="파일명에 포함 · 대소문자 구분 안 함"/><ComboBoxItem Content="괄호 안 구분값 일치 · 대소문자 구분"/></ComboBox><TextBlock Foreground="{DynamicResource TextBrush}" Text="검색어 · 괄호 일치는 [A], (A), {A} 형식" Margin="0,8,0,4"/></StackPanel><TextBox x:Name="KeywordsInput" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="목적지 검색어 · 한 줄에 하나"/></DockPanel>
+      </Grid>
+      <Separator Margin="0,14"/>
+      <CheckBox x:Name="RecursiveInput" Content="검사할 폴더의 하위 폴더 포함" Margin="0,0,0,10"/>
+      <TextBlock Foreground="{DynamicResource TextBrush}" Text="목적지 없는 파일의 새 그룹 기준" Margin="0,0,0,6"/>
+      <ComboBox x:Name="GroupInput" SelectedIndex="0" AutomationProperties.Name="새 그룹 분류 기준" SelectionChanged="GroupOptionsChanged"><ComboBoxItem Content="대괄호 [ ]"/><ComboBoxItem Content="소괄호 ( )"/><ComboBoxItem Content="중괄호 { }"/><ComboBoxItem Content="직접 정규식 · group 캡처 사용"/></ComboBox>
+      <TextBox x:Name="GroupPattern" Visibility="Collapsed" Margin="0,8,0,0" MaxLength="2000" AutomationProperties.Name="새 그룹 분류 정규식"/>
+      <TextBlock Text="기준 폴더 안의 파일 내용은 읽지 않습니다. 부분 포함도 후보로 표시하므로 결과의 일치 이유를 확인하세요." TextWrapping="Wrap" Foreground="{DynamicResource SubBrush}" Margin="0,10"/>
+      <Button x:Name="AnalyzeButton" Content="분석" Click="Analyze" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Right"/>
+     </StackPanel></ScrollViewer>
+    </Expander>
+    <Expander x:Name="ResultsSection" Style="{StaticResource AnalysisSection}" Grid.Row="1" IsExpanded="False" IsEnabled="False" Expanded="ResultsExpanded" Collapsed="ResultsCollapsed" HorizontalContentAlignment="Stretch">
+     <Expander.Header><StackPanel><TextBlock Foreground="{DynamicResource TextBrush}" Text="분석 결과" FontWeight="SemiBold"/><TextBlock x:Name="ResultsSummary" Text="아직 분석하지 않았습니다." Foreground="{DynamicResource SubBrush}" TextWrapping="Wrap"/></StackPanel></Expander.Header>
+     <Grid Margin="0,10,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <WrapPanel Margin="0,0,0,10"><ComboBox x:Name="FilterInput" SelectedIndex="0" Width="170" SelectionChanged="FilterChanged" AutomationProperties.Name="목적지 상태 필터"><ComboBoxItem Content="전체 파일"/><ComboBoxItem Content="목적지 결정"/><ComboBoxItem Content="선택 필요"/><ComboBoxItem Content="목적지 없음"/></ComboBox><Button Content="그룹 선택 해제" Click="ClearGroup" Margin="8,0,0,0"/><TextBlock Foreground="{DynamicResource TextBrush}" x:Name="GroupFilterText" VerticalAlignment="Center" Margin="8,0,0,0"/></WrapPanel>
+      <Grid Grid.Row="1"><Grid.ColumnDefinitions><ColumnDefinition Width="220"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+       <DockPanel><StackPanel DockPanel.Dock="Top"><TextBlock Foreground="{DynamicResource TextBrush}" Text="새 그룹 · 목적지 없는 파일" FontWeight="SemiBold" Margin="0,0,0,8"/></StackPanel><WrapPanel DockPanel.Dock="Bottom" Margin="0,8,0,0"><Button Content="이전" Click="PreviousGroup" Padding="8,4"/><Button Content="다음" Click="NextGroup" Padding="8,4" Margin="5,0"/><TextBlock Foreground="{DynamicResource TextBrush}" x:Name="GroupPageText" VerticalAlignment="Center"/></WrapPanel><DataGrid x:Name="GroupsGrid" IsReadOnly="True" AutoGenerateColumns="False" SelectionMode="Single" SelectionChanged="GroupChanged" AutomationProperties.Name="새 분류 그룹"><DataGrid.Columns><DataGridTextColumn Header="그룹" Binding="{Binding Key}" Width="*"/><DataGridTextColumn Header="개수" Binding="{Binding Count}" Width="55"/></DataGrid.Columns></DataGrid></DockPanel>
+       <DockPanel Grid.Column="2"><WrapPanel DockPanel.Dock="Bottom" Margin="0,8,0,0"><Button Content="이전" Click="PreviousFile" Padding="8,4"/><Button Content="다음" Click="NextFile" Padding="8,4" Margin="5,0"/><TextBlock Foreground="{DynamicResource TextBrush}" x:Name="FilePageText" VerticalAlignment="Center"/></WrapPanel><DataGrid x:Name="FilesGrid" IsReadOnly="True" AutoGenerateColumns="False" SelectionMode="Single" SelectionChanged="FileChanged" AutomationProperties.Name="파일별 목적지와 일치 이유"><DataGrid.Columns><DataGridTextColumn Header="파일명" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="상태" Binding="{Binding Status}" Width="95"/><DataGridTextColumn Header="최종 목적지" Binding="{Binding Destination}" Width="*"/><DataGridTextColumn Header="이유" Binding="{Binding Reason}" Width="*"/></DataGrid.Columns></DataGrid></DockPanel>
+      </Grid>
+      <StackPanel Grid.Row="2" Margin="0,12,0,0">
+       <TextBox x:Name="FileDetails" IsReadOnly="True" TextWrapping="Wrap" MaxHeight="80" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="선택 파일의 전체 경로와 후보 목적지"/>
+       <TextBlock Foreground="{DynamicResource TextBrush}" Text="기존 목적지 또는 새 폴더명을 선택하세요. 폴더는 실제 이동 때 생성됩니다." Margin="0,8,0,4"/>
+       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><StackPanel><RadioButton Foreground="{DynamicResource TextBrush}" x:Name="ExistingDestinationOption" GroupName="DestinationMode" Content="기존 목적지" IsChecked="True" Margin="0,0,0,5"/><ComboBox x:Name="DestinationInput" DisplayMemberPath="Name" IsEnabled="{Binding IsChecked, ElementName=ExistingDestinationOption}" AutomationProperties.Name="기존 이동 목적지"/></StackPanel><StackPanel Grid.Column="2"><RadioButton Foreground="{DynamicResource TextBrush}" x:Name="NewDestinationOption" GroupName="DestinationMode" Content="새 폴더명" Margin="0,0,0,5"/><TextBox x:Name="NewNameInput" IsEnabled="{Binding IsChecked, ElementName=NewDestinationOption}" AutomationProperties.Name="기준 폴더 아래에 만들 새 폴더명"/></StackPanel></Grid>
+       <WrapPanel Margin="0,8,0,0"><Button Content="선택 파일에 적용" Click="AssignFile"/><Button Content="현재 그룹 전체에 적용" Click="AssignGroup" Margin="8,0,0,0"/><Button Content="선택 파일 보류" Click="HoldFile" Margin="8,0,0,0"/></WrapPanel>
+      </StackPanel>
+     </Grid>
+    </Expander>
+   </Grid>
+  </ScrollViewer>
+ </DockPanel>
+</Window>

@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json;
-using FileOrganizer.Core;
-using FileOrganizer.Windows;
+using Chagok.Core;
+using Chagok.Windows;
 
 namespace Chagok.Terminal;
 
@@ -25,6 +25,7 @@ public static class Program
                 return 0;
             }
             if (parsed.Words.SequenceEqual(["version"])) { parsed.Allow(); Console.WriteLine(parsed.Json ? JsonSerializer.Serialize(new { program = "Chagok", version = HelpCatalog.Version }) : "Chagok " + HelpCatalog.Version); return 0; }
+            if (parsed.Words.FirstOrDefault() == "path") return PathCommand.Run(parsed);
             var directory = PathSafety.Normalize(parsed.Get("data-dir") ?? SessionLease.DefaultDirectory);
             using var lease = SessionLease.Acquire(directory, parsed.Words.Count == 0 || parsed.Words[0] == "tui" ? "TUI" : "CLI");
             var storage = new Storage(directory);
@@ -35,8 +36,8 @@ public static class Program
         catch (OperationCanceledException) { return Error("작업을 취소했습니다. 이미 완료한 이동은 유지됩니다.", 130); }
         catch (SessionBusyException ex) { return Error(ex.Message, 3); }
         catch (ArgumentException ex) { return Error(ex.Message, 2); }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or PlatformNotSupportedException
-            or System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or InvalidDataException or PlatformNotSupportedException
+            or System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException or System.Security.SecurityException)
         { return Error(ex.Message, 1); }
         finally { Console.CancelKeyPress -= cancel; }
 

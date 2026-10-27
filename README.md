@@ -1,14 +1,24 @@
-# 차곡 · CHAGOK — 0.8.0 로컬 테스트 빌드
+# 차곡 · CHAGOK — 0.9.0
 
 **[차곡 0.6.6 다운로드 · Windows x64](https://github.com/ksyrang/Chagok/releases/download/v0.6.6/Chagok-v0.6.6-win-x64.zip)**
 
-[0.6.6 릴리스 안내](https://github.com/ksyrang/Chagok/releases/tag/v0.6.6)에서 변경 사항을 확인할 수 있습니다. ZIP을 내려받아 압축을 푼 뒤 `Chagok-v0.6.6.exe`를 실행하세요. 현재는 서명하지 않은 테스트 빌드입니다.
+[0.6.6 릴리스 안내](https://github.com/ksyrang/Chagok/releases/tag/v0.6.6)에서 변경 사항을 확인할 수 있습니다. 이전에 공개한 0.6.6 ZIP에는 `Chagok-v0.6.6.exe`가 들어 있습니다. 현재 개발 소스의 배포 파일명은 `Chagok.exe`로 고정했습니다. 현재는 서명하지 않은 테스트 빌드입니다.
 
 ksyrang이 개발하는 차곡은 폴더별 규칙으로 파일을 정리하는 Windows 도구입니다. 폴더·규칙 중심의 구성은 [Forel](https://github.com/lab421/forel)에서 영감을 받았습니다. Forel 또는 lab421의 공식·제휴 프로젝트는 아닙니다.
 
 [Forel 참조 범위와 출처 점검 기록](docs/forel-provenance-review.md)
 
 [사용 설명서 (HTML)](사용설명서.html) — 4단계 화면 예시와 핵심 순서 그림으로 안내합니다. 자세한 내용은 펼쳐 읽을 수 있으며, 인터넷 없이 열기·문서 테마·인쇄/PDF 저장을 제공합니다.
+
+## 고정 실행 파일명과 터미널 명령 등록
+
+현재 개발 소스는 `Chagok.exe`를 게시합니다. 배포 ZIP 이름에는 `Chagok-v{version}-win-x64.zip`처럼 버전을 남깁니다. 앱 정보와 `chagok version`으로 프로그램 버전을 확인할 수 있습니다.
+
+실행 파일을 계속 사용할 폴더에 둔 뒤 PowerShell에서 `.\Chagok.exe path add`를 한 번 실행하세요. 터미널 앱을 완전히 종료하고 다시 열면 어느 폴더에서든 `chagok tui`, `chagok help`를 실행할 수 있습니다. 관리자 권한은 필요하지 않습니다. `chagok path status`로 사용자 PATH 등록 상태를 확인하고 `chagok path remove`로 현재 실행 파일 폴더를 해제합니다. 같은 위치의 EXE만 업데이트하면 재등록할 필요가 없습니다. 자세한 절차는 [터미널 사용법](docs/terminal-guide.md)을 확인하세요.
+
+데이터 저장 위치는 `%LOCALAPPDATA%\Chagok`입니다. 첫 데이터 사용 시 기존 `%LOCALAPPDATA%\FileOrganizer`의 설정·실행 기록·설정 백업을 자동으로 복사합니다. 원본은 보존하며 새 위치의 기존 데이터는 덮어쓰지 않습니다. 자세한 보존·실패 기준은 [터미널 사용법](docs/terminal-guide.md)의 데이터 가져오기 설명을 확인하세요.
+
+GitHub 저장소는 기존 `ksyrang/Chagok`을 사용합니다. 소스·테스트 프로젝트와 네임스페이스는 `Chagok.Core`, `Chagok.Windows`, `Chagok.Terminal`, `Chagok.Checks`로 통일했습니다.
 
 ## 0.8.0 · 정리 방식 선택과 기준 폴더 TUI
 
@@ -17,12 +27,12 @@ GUI와 TUI가 **규칙으로 정리 / 기준 폴더로 정리** 시작 화면으
 - GUI: 왼쪽에서 검사 폴더 선택 → **기존 규칙 목록 열기**. 기존 규칙 화면 위의 **정리 방식 선택**으로 돌아갑니다. 폴더별 규칙·추가·편집·켜기/끄기·개별/전체 검사는 기존과 같습니다.
 - GUI: **기준 폴더 선택하기**는 별도 정리 창을 엽니다. 검사할 폴더는 등록 위치를 기본값으로 넣지만, 다른 경로를 직접 입력하거나 **변경**으로 골라 이번에만 검사할 수 있습니다. 등록 폴더·규칙·기존 제외 경로를 다른 위치에 덮어쓰지 않습니다. 검사 위치와 정리된 기준 폴더를 별도 입력으로 표시합니다.
 - 기준 폴더 정리는 파일명 분석의 하위 기능에서 분리했습니다. 파일명 분석은 시작 화면·기존 규칙 화면·등록 폴더 분석에서 사용하는 보조 도구로 유지합니다.
-- TUI: `.\Chagok-v0.8.0.exe tui` → **1/Enter 기존 규칙**, **2 기준 폴더**, ↑↓ 기본 폴더, F 폴더 등록. 기존 대시보드에서 **O** 또는 폴더 영역의 Esc로 시작 화면에 돌아갑니다. 기존 **R 개별 규칙 / A 폴더 전체** 동작을 유지합니다.
+- TUI: `.\Chagok.exe tui` → **1/Enter 기존 규칙**, **2 기준 폴더**, ↑↓ 기본 폴더, F 폴더 등록. 기존 대시보드에서 **O** 또는 폴더 영역의 Esc로 시작 화면에 돌아갑니다. 기존 **R 개별 규칙 / A 폴더 전체** 동작을 유지합니다.
 - TUI 기준 폴더: 검사/기준 경로·하위 폴더·새 그룹 기준 설정 → 목적지별 **E 검색어·별칭 편집** → **R 분석**. 별칭은 `;`로 구분합니다. 괄호 값 일치는 `[A]`처럼 입력하며 대소문자를 구분합니다.
 - 결과: **Tab 파일/새 그룹**, **↑↓ 선택**, **N/P 페이지**, **F 상태 필터/그룹 해제**, **I 전체 경로·후보 이유**, **D 파일/그룹 목적지 지정**, **H 파일 보류**, **W 경고**. 그룹에서 Enter로 멤버를 확인합니다.
 - **V 이동 계획 검토**에서 목적지가 결정된 전체 파일 수와 제외되는 미결정 수를 확인합니다. 기존 미리보기에서 선택한 항목을 Enter → Y로 실행합니다. 분석·목적지 지정·계획 검토만으로 파일을 이동하지 않습니다.
 
-미등록 폴더의 임시 검사는 기준 폴더 방식에만 제공합니다. 영구 규칙·검색어 저장은 추가하지 않았습니다. 이번 로컬 배포는 0.8.0이며 상단 공개 GitHub 다운로드 0.6.6은 유지합니다.
+미등록 폴더의 임시 검사는 기준 폴더 방식에만 제공합니다. 영구 규칙·검색어 저장은 추가하지 않았습니다. 현재 개발 버전은 0.9.0이며 상단 공개 GitHub 다운로드 0.6.6은 유지합니다.
 
 ## 0.7.1 · 분석 화면 다크 테마 글자색 수정
 
@@ -131,7 +141,7 @@ GUI와 TUI가 **규칙으로 정리 / 기준 폴더로 정리** 시작 화면으
 
 ## 통합 실행·아이콘·TUI
 
-`Chagok-v0.6.6.exe` 하나로 제공합니다. 더블 클릭은 GUI, PowerShell에서 `.\Chagok-v0.6.6.exe tui`는 TUI, `.\Chagok-v0.6.6.exe help`는 명령 도움말입니다. [터미널 사용법](docs/terminal-guide.md)을 확인하세요.
+`Chagok.exe` 하나로 제공합니다. 더블 클릭은 GUI, PowerShell에서 `.\Chagok.exe tui`는 TUI, `.\Chagok.exe help`는 명령 도움말입니다. [터미널 사용법](docs/terminal-guide.md)을 확인하세요.
 
 - GUI와 같은 폴더·규칙·앱 설정·기록을 사용합니다. JSON 버전 1과 기존 데이터 위치를 유지합니다.
 - GUI·CLI·TUI 중 하나만 실행합니다. GUI가 트레이에 남아 있어도 거부됩니다. 기존 앱을 완전히 종료한 뒤 전환하세요.
@@ -154,7 +164,7 @@ TUI의 메인/미리보기에서 F1 또는 ?로 기능 설명을 엽니다. 좌�
 ## 실행
 
 1. `Chagok-v0.6.6-win-x64.zip`을 윈도우 PC의 쓰기 가능한 폴더에 압축 해제합니다.
-2. `Chagok-v0.6.6.exe`를 실행합니다. 이 패키지는 일반 Intel/AMD 64비트 윈도우 PC용입니다.
+2. `Chagok.exe`를 실행합니다. 이 패키지는 일반 Intel/AMD 64비트 윈도우 PC용입니다.
 3. 왼쪽 `＋`로 검사 폴더를 등록합니다.
 4. `규칙 추가`에서 파일명·확장자, 이동 위치, 이름 충돌 처리, 실행 방식을 저장합니다.
 5. 상단 `폴더 전체 검사 및 실행` 또는 각 규칙의 `검사 및 실행`을 누릅니다. 검사 결과에서 항목을 확인한 뒤 `선택 항목 실행`을 누릅니다. 검사 버튼만으로 파일을 이동하지 않습니다.
@@ -233,17 +243,17 @@ TUI의 메인/미리보기에서 F1 또는 ?로 기능 설명을 엽니다. 좌�
 
 ## 0.1.5 변경 사항
 
-- 파일 이름을 발음에 맞춘 영문 `Chagok-v0.6.6.exe`, 배포 ZIP을 `Chagok-v0.1.5-win-x64.zip`으로 변경했습니다. 앱 화면의 ‘차곡 · by ksyrang’ 표기는 유지합니다.
+- 파일 이름을 발음에 맞춘 영문 `Chagok.exe`, 배포 ZIP을 `Chagok-v0.1.5-win-x64.zip`으로 변경했습니다. 앱 화면의 ‘차곡 · by ksyrang’ 표기는 유지합니다.
 - 기존 설정과 실행 기록을 같은 저장 위치에서 불러옵니다.
 
 ## 0.1.4 변경 사항
 
 - 배포 ZIP 이름을 `차곡-v0.1.4-win-x64.zip`, 실행 파일 이름을 `차곡.exe`로 변경했습니다. 파일 속성의 제품·제목도 ‘차곡’입니다.
-- 기존 설정·기록을 읽기 위해 데이터 저장 경로는 `%LOCALAPPDATA%\FileOrganizer`를 유지합니다. 소스 폴더·네임스페이스 이름도 유지합니다.
+- 이 버전 당시 데이터 저장 경로는 `%LOCALAPPDATA%\FileOrganizer`였습니다. 현재 개발 소스는 Chagok 프로젝트·네임스페이스와 새 데이터 경로를 사용하며 기존 데이터를 자동으로 가져옵니다.
 
 ## 0.1.3 변경 사항
 
-- 이름 ‘차곡’과 ‘by ksyrang’ 표기를 적용했습니다. 승인한 시안은 `assets/branding/chagok-approved-board.png`, 앱용 PNG·ICO는 `src/FileOrganizer.Windows/Assets`에 보관합니다.
+- 이름 ‘차곡’과 ‘by ksyrang’ 표기를 적용했습니다. 승인한 시안은 `assets/branding/chagok-approved-board.png`, 앱용 PNG·ICO는 `src/Chagok.Windows/Assets`에 보관합니다.
 - 실행 파일·창·작업 표시줄·트레이와 메인 화면 상단에 앱 아이콘을 적용했습니다.
 - 실행 조건의 실행 파일 찾기는 Windows 기본 파일 선택 창을 사용합니다. 폴더 선택도 Windows 기본 창을 사용합니다. 기본 선택 창의 테마는 Windows 동작을 따릅니다.
 - 저장된 설정과 실행 기록은 기존 위치에서 불러옵니다. 이 버전의 실행 파일은 `FileOrganizer.exe`였으며, 0.1.4부터 `차곡.exe`로 변경했습니다.
@@ -296,7 +306,7 @@ TUI의 메인/미리보기에서 F1 또는 ?로 기능 설명을 엽니다. 좌�
 
 ## 탐색기에서 규칙 추가
 
-1. 새 `Chagok-v0.6.6.exe`를 사용할 위치에 두고 실행합니다. 이전 차곡이 트레이에 있으면 먼저 종료합니다.
+1. 새 `Chagok.exe`를 사용할 위치에 두고 실행합니다. 이전 차곡이 트레이에 있으면 먼저 종료합니다.
 2. 시작 시 현재 사용자의 메뉴 등록을 확인합니다. 수동 등록·해제는 `설정 → 탐색기 연동`에서 즉시 적용합니다. 자동 확인을 끌 수도 있습니다.
 3. Windows 탐색기에서 이동 목적지로 쓸 폴더를 우클릭하고 `차곡에 추가`를 선택합니다. Windows 11에서는 `더 많은 옵션 표시` 안에 보일 수 있습니다.
 4. 창에서 목적지를 확인하고 규칙을 넣을 기존 검사 폴더를 선택하거나 새 검사 폴더를 등록합니다. 다음 규칙 편집 창에서 조건을 정해 저장합니다. 파일을 바로 이동하지 않습니다.
@@ -311,7 +321,7 @@ EXE를 이동·교체해 경로가 달라지면 새 EXE에서 자동 확인 또�
 
 테스트 PC에서는 `설정 → 탐색기 연동 → Windows 개발자 설정 열기`로 Windows 설정을 확인한 뒤 메뉴 등록을 다시 누릅니다. 실제 첫 메뉴 표시·활성화·해제는 이 맥에서 검증하지 못했습니다. 메뉴가 보이지 않을 때 탐색기를 다시 열거나 재로그인이 필요할 수 있습니다. 기존 메뉴도 함께 유지합니다.
 
-연동 리소스는 `%LOCALAPPDATA%\FileOrganizer\shell-extension`의 버전별 폴더에 풀립니다. 등록 상태와 EXE 경로는 차곡 전용 HKCU 키에 저장합니다. 해제는 패키지·레지스트리 등록을 제거합니다. 로딩 중인 DLL을 강제로 지우지 않으며 버전별 리소스 파일은 남을 수 있습니다. 이 저장소는 앱 검사에서 제외합니다.
+연동 리소스는 `%LOCALAPPDATA%\Chagok\shell-extension`의 버전별 폴더에 풀립니다. 등록 상태와 EXE 경로는 차곡 전용 HKCU 키에 저장합니다. 해제는 패키지·레지스트리 등록을 제거합니다. 로딩 중인 DLL을 강제로 지우지 않으며 버전별 리소스 파일은 남을 수 있습니다. 이 저장소는 앱 검사에서 제외합니다.
 
 ## 프로그램 감지
 
@@ -327,9 +337,10 @@ WMI 이벤트 등록이 거부되면 250ms 간격의 확인 방식으로 전환�
 
 ## 데이터와 기록
 
-`%LOCALAPPDATA%\FileOrganizer`에 저장합니다. `설정 → 앱 정보 → 데이터 폴더 열기`로 열 수 있습니다.
+`%LOCALAPPDATA%\Chagok`에 저장합니다. `설정 → 앱 정보 → 데이터 폴더 열기`로 열 수 있습니다.
 
 - `settings.json`: 폴더·규칙·폴더 실행 조건·테마·창 닫기·종료 확인. 저장 전 설정은 `settings.json.backup`에 보관합니다.
+- `legacy-import.json`: 기존 FileOrganizer 데이터 가져오기를 완료했다는 표식입니다.
 - `history.jsonl`: 작업 시작·성공·실패·원본 보존·감지 오류 기록. 화면에는 최근 500개를 표시합니다.
 - `scan-cache/scan-.../plan.db`: 현재 검사 결과·선택 상태·충돌 계산을 위한 임시 저장소입니다. 다시 검사하거나 규칙 목록으로 돌아가거나 폴더·규칙 설정을 바꾸거나 앱을 정상 종료하면 삭제를 시도합니다. 창을 닫아 트레이에 숨긴 동안에는 현재 결과를 유지합니다. 비정상 종료 등으로 남은 캐시는 다음 검사 때 정리합니다. 이전 검사를 재개하거나 자동 실행하지 않습니다.
 
@@ -348,9 +359,9 @@ WMI 이벤트 등록이 거부되면 250ms 간격의 확인 방식으로 전환�
 SDK가 설치된 개발 PC:
 
 ```sh
-dotnet run --project tests/FileOrganizer.Checks/FileOrganizer.Checks.csproj
-dotnet build src/FileOrganizer.Windows/FileOrganizer.Windows.csproj
-dotnet publish src/FileOrganizer.Windows/FileOrganizer.Windows.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o dist/win-x64
+dotnet run --project tests/Chagok.Checks/Chagok.Checks.csproj
+dotnet build src/Chagok.Windows/Chagok.Windows.csproj
+dotnet publish src/Chagok.Windows/Chagok.Windows.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o dist/win-x64
 ```
 
 ARM 윈도우용 빌드는 `-r win-arm64`로 지정합니다. 현재 전달 패키지는 `win-x64`입니다.
@@ -358,7 +369,7 @@ ARM 윈도우용 빌드는 `-r win-arm64`로 지정합니다. 현재 전달 패�
 현재 맥 작업 환경에서는 프로젝트 내부 `scripts/dotnet.sh`가 SDK 위치를 읽습니다. 외장 드라이브의 메타데이터 문제를 피하려고 SDK와 NuGet 캐시는 `/private/tmp`에 두었습니다. 임시 폴더가 정리되면 SDK를 다시 준비하거나 설치한 SDK로 위 명령을 사용하세요.
 
 ```sh
-FILEORGANIZER_BUILD_CACHE=/private/tmp/fileorganizer-build-cache bash scripts/dotnet.sh run --project tests/FileOrganizer.Checks/FileOrganizer.Checks.csproj
+CHAGOK_BUILD_CACHE=/private/tmp/chagok-build-cache bash scripts/dotnet.sh run --project tests/Chagok.Checks/Chagok.Checks.csproj
 ```
 
 ## 검증 상태
@@ -375,4 +386,4 @@ FILEORGANIZER_BUILD_CACHE=/private/tmp/fileorganizer-build-cache bash scripts/do
 
 차곡의 자체 작성 코드와 문서는 [MIT 라이선스](LICENSE)로 제공합니다. 저작권·라이선스 고지를 유지하면 사용, 수정, 재배포와 유료 배포를 허용합니다. 수정한 소스를 공개할 의무는 없습니다. 프로그램은 보증 없이 제공하며, 자세한 조건은 라이선스 원문을 따릅니다.
 
-외부 구성요소는 각각의 라이선스를 따릅니다. 기존 고지는 유지하며, 네이티브 탐색기 확장의 고지는 [ShellExtension-LICENSES.txt](src/FileOrganizer.Windows/Assets/Shell/ShellExtension-LICENSES.txt)에서 확인할 수 있습니다.
+외부 구성요소는 각각의 라이선스를 따릅니다. 기존 고지는 유지하며, 네이티브 탐색기 확장의 고지는 [ShellExtension-LICENSES.txt](src/Chagok.Windows/Assets/Shell/ShellExtension-LICENSES.txt)에서 확인할 수 있습니다.

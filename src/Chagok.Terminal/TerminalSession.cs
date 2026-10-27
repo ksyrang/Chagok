@@ -1,4 +1,4 @@
-using FileOrganizer.Core;
+using Chagok.Core;
 
 namespace Chagok.Terminal;
 
@@ -18,9 +18,9 @@ public sealed class TerminalSession(Storage storage, AppSettings settings)
     public void Save(AppSettings next) { Storage.Save(next); Settings = next; }
     public void PutFolder(FolderSpec folder)
     {
-        var next = FileOrganizer.Core.Storage.Clone(Settings);
+        var next = Chagok.Core.Storage.Clone(Settings);
         SettingsValidation.Folder(next, folder);
-        if (PathSafety.IsWithin(folder.Path, PathSafety.Normalize(Storage.DirectoryPath)))
+        if (Storage.IsDataPath(folder.Path))
             throw new ArgumentException("차곡 데이터 저장소는 검사 폴더로 사용할 수 없습니다.");
         var index = next.Folders.FindIndex(f => f.Id == folder.Id);
         if (index < 0) next.Folders.Add(folder); else next.Folders[index] = folder;
@@ -28,7 +28,7 @@ public sealed class TerminalSession(Storage storage, AppSettings settings)
     }
     public void PutRule(Guid folderId, RuleSpec rule)
     {
-        var folder = FileOrganizer.Core.Storage.Clone(Folder(folderId.ToString()));
+        var folder = Chagok.Core.Storage.Clone(Folder(folderId.ToString()));
         SettingsValidation.Rule(folder, rule);
         var index = folder.Rules.FindIndex(r => r.Id == rule.Id);
         if (index < 0) folder.Rules.Add(rule); else folder.Rules[index] = rule;
@@ -37,28 +37,28 @@ public sealed class TerminalSession(Storage storage, AppSettings settings)
     }
     public void RemoveFolder(Guid id)
     {
-        var next = FileOrganizer.Core.Storage.Clone(Settings); next.Folders.RemoveAll(f => f.Id == id); Save(next);
+        var next = Chagok.Core.Storage.Clone(Settings); next.Folders.RemoveAll(f => f.Id == id); Save(next);
     }
     public void RemoveRule(Guid folderId, Guid id)
     {
-        var folder = FileOrganizer.Core.Storage.Clone(Folder(folderId.ToString()));
+        var folder = Chagok.Core.Storage.Clone(Folder(folderId.ToString()));
         folder.Rules.RemoveAll(r => r.Id == id); PutFolder(folder);
     }
     public FilenameAnalysis Analyze(AnalysisOptions options, CancellationToken token, Guid? scope = null)
     {
-        var folders = Settings.Folders.Where(f => scope is null || f.Id == scope).Select(FileOrganizer.Core.Storage.Clone).ToArray();
-        if (folders.Any(f => PathSafety.IsWithin(f.Path, Storage.DirectoryPath)))
+        var folders = Settings.Folders.Where(f => scope is null || f.Id == scope).Select(Chagok.Core.Storage.Clone).ToArray();
+        if (folders.Any(f => Storage.IsDataPath(f.Path)))
             throw new ArgumentException("차곡 데이터 저장소는 분석 폴더로 사용할 수 없습니다.");
-        var destinations = Settings.Folders.SelectMany(f => f.Rules).Select(DestinationPaths.Resolve).Append(Storage.DirectoryPath).ToArray();
+        var destinations = Settings.Folders.SelectMany(f => f.Rules).Select(DestinationPaths.Resolve).Concat(Storage.ProtectedDirectories).ToArray();
         return FilenameAnalysis.Scan(folders, destinations, Path.Combine(Storage.DirectoryPath, "analysis-cache"), options, token);
     }
     public DiskPlanStore Scan(FolderSpec folder, IReadOnlySet<Guid>? rules, CancellationToken token)
     {
-        if (PathSafety.IsWithin(folder.Path, PathSafety.Normalize(Storage.DirectoryPath)))
+        if (Storage.IsDataPath(folder.Path))
             throw new ArgumentException("차곡 데이터 저장소는 검사 폴더로 사용할 수 없습니다.");
         var destinations = Settings.Folders.SelectMany(f => f.Rules).Select(DestinationPaths.Resolve)
-            .Append(PathSafety.Normalize(Storage.DirectoryPath)).ToArray();
-        return new Planner().ScanToDisk(FileOrganizer.Core.Storage.Clone(folder), destinations,
+            .Concat(Storage.ProtectedDirectories).ToArray();
+        return new Planner().ScanToDisk(Chagok.Core.Storage.Clone(folder), destinations,
             Path.Combine(Storage.DirectoryPath, "scan-cache"), rules, token);
     }
     public async Task<ExecutionReport> ExecuteAsync(DiskPlanStore plan, IRecycleBin recycle,

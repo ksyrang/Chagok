@@ -1,6 +1,6 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using FileOrganizer.Core;
+using Chagok.Core;
 
 namespace Chagok.Terminal;
 
@@ -127,7 +127,7 @@ public sealed class Commands(TerminalSession session, IRecycleBin recycle, Cance
                 if (session.Settings.Folders.Where(f => scope is null || f.Id == scope).Any(f => f.RunMode == RunMode.Automatic && f.Trigger != TriggerMode.Manual || f.Rules.Any(r => r.Enabled && r.Trigger != TriggerMode.Manual && r.RunMode == RunMode.Automatic)))
                     await ConfirmAsync(args, "저장된 자동 실행 조건에 따라 파일이 이동할 수 있습니다.");
                 await WatchRunner.RunAsync(session, recycle, token, scope, args.Json, false); break;
-            default: throw new ArgumentException("알 수 없는 명령입니다. Chagok-v0.5.0.exe help를 확인하세요.");
+            default: throw new ArgumentException("알 수 없는 명령입니다. Chagok.exe help를 확인하세요.");
         }
         return 0;
     }

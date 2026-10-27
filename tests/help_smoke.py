@@ -16,14 +16,19 @@ def call(args,code=0):
  checks+=1
  return json.loads(p.stdout if code==0 else p.stderr)
 
-catalog=call(['help','--json']);assert catalog['schemaVersion']==1 and len(catalog['commands'])==18
+catalog=call(['help','--json']);assert catalog['schemaVersion']==1 and len(catalog['commands'])==22
 assert catalog==json.loads((Path(__file__).resolve().parents[1]/'docs/cli-reference.json').read_text())
 for command in catalog['commands']:
  topic=command['name'].split()
  a=call(['help']+topic+['--json']);b=call(topic+['--help','--json'])
  assert a==b and a['commands'][0]['name']==command['name'], command['name']
  assert command['usage'] and command['description'] and command['effects'] and command['confirmation']
+call(['path','unknown','--json'],2)
+call(['path','add','--yes','--json'],2)
+if sys.platform != 'win32':
+ for action in ['add','status','remove']:
+  call(['path',action,'--json'],1)
 call(['help','unknown','--json'],2)
 call(['run','--help','--yes','--json'],2)
 assert call(['--version','--json'])['version']==catalog['version']
-print(json.dumps({'helpCallsPassed':checks,'all18CommandsDescribed':True,'exportMatchesRuntime':True,'noSettingsOrLockCreated':True},ensure_ascii=False))
+print(json.dumps({'helpCallsPassed':checks,'allCommandsDescribed':len(catalog['commands']),'exportMatchesRuntime':True,'noSettingsOrLockCreated':True},ensure_ascii=False))

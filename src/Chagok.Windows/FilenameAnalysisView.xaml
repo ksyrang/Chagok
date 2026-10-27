@@ -1,0 +1,59 @@
+<UserControl x:Class="Chagok.Windows.FilenameAnalysisView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+ <ScrollViewer x:Name="AnalysisPage" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False">
+ <Grid Height="{Binding ViewportHeight, ElementName=AnalysisPage}" MinHeight="560">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition x:Name="SettingsRow" Height="*"/><RowDefinition x:Name="ResultsRow" Height="Auto"/></Grid.RowDefinitions>
+  <StackPanel Margin="0,0,0,16"><TextBlock Foreground="{DynamicResource TextBrush}" x:Name="TitleText" Text="파일명 분석" FontSize="25" FontWeight="SemiBold"/><TextBox x:Name="PathText" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" MinHeight="24" Foreground="{DynamicResource SubBrush}" FontSize="12"/><StackPanel Orientation="Horizontal" Margin="0,12,0,0"><Button Content="규칙" Click="RulesClick" Margin="0,0,8,0"/><Border BorderBrush="{DynamicResource AccentBrush}" BorderThickness="0,0,0,2" Padding="12,8"><TextBlock Text="파일명 분석" Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold"/></Border></StackPanel></StackPanel>
+  <Expander x:Name="SettingsAccordion" Grid.Row="1" Style="{StaticResource AnalysisSection}" IsExpanded="True" Expanded="AccordionExpanded" Collapsed="AccordionCollapsed" Margin="0,0,0,12" AutomationProperties.Name="분석 조건 설정">
+   <Expander.Header><StackPanel><TextBlock Foreground="{DynamicResource TextBrush}" Text="분석 조건" FontWeight="SemiBold"/><TextBlock x:Name="SettingsSummary" Text="조건을 설정한 후 분석을 누르세요." TextTrimming="CharacterEllipsis" Foreground="{DynamicResource SubBrush}" FontSize="12"/></StackPanel></Expander.Header>
+   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False" Padding="0,0,12,0">
+  <StackPanel><WrapPanel>
+   <StackPanel Margin="0,0,12,8"><TextBlock Foreground="{DynamicResource TextBrush}" Text="분류 기준" FontSize="12" Margin="0,0,0,5"/><ComboBox x:Name="Brackets" Width="190" SelectedIndex="0" SelectionChanged="OptionsChanged" AutomationProperties.Name="파일명 분석 분류 기준"><ComboBoxItem Content="조건으로 선택"/><ComboBoxItem Content="직접 입력 (정규식)"/></ComboBox></StackPanel>
+   <CheckBox x:Name="Recursive" Content="하위 폴더 포함" VerticalAlignment="Bottom" Margin="0,0,12,14" Click="OptionsChanged"/>
+   <Button x:Name="AnalyzeButton" Content="분석" Style="{StaticResource PrimaryButton}" Click="AnalyzeClick" VerticalAlignment="Bottom" Margin="0,0,0,8" ToolTip="등록된 모든 폴더를 현재 조건으로 분석합니다. 파일은 이동하지 않습니다."/>
+  </WrapPanel>
+  <ContentControl x:Name="ConditionFields" Margin="0,0,0,8" HorizontalContentAlignment="Stretch" AutomationProperties.Name="파일명 분석 분류 조건"/>
+  <StackPanel x:Name="CustomFields" Visibility="Collapsed" Margin="0,0,0,8">
+   <DockPanel><Button Content="입력 방법" Click="PatternHelpClick" DockPanel.Dock="Right" Margin="8,0,0,0"/><TextBox x:Name="CustomPattern" MaxLength="2000" TextChanged="PatternChanged" AutomationProperties.Name="분류 정규식" VerticalContentAlignment="Center"/></DockPanel>
+   <DockPanel Margin="0,6,0,0"><TextBlock Foreground="{DynamicResource TextBrush}" Text="시험할 파일명" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox x:Name="SampleName" Text="[a] 보고서.pdf" TextChanged="PatternChanged" AutomationProperties.Name="정규식 시험 파일명"/></DockPanel>
+   <TextBlock x:Name="PatternPreview" TextWrapping="Wrap" Foreground="{DynamicResource SubBrush}" Margin="0,5,0,0"/>
+  </StackPanel><TextBlock x:Name="HintText" Text="괄호 안의 같은 값을 묶습니다. 대소문자를 구분하고, 한 파일의 같은 값은 한 번만 셉니다." TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource SubBrush}"/>
+</StackPanel>
+   </ScrollViewer>
+  </Expander>
+  <Expander x:Name="ResultsAccordion" Grid.Row="2" Style="{StaticResource AnalysisSection}" IsExpanded="False" IsEnabled="False" Expanded="AccordionExpanded" Collapsed="AccordionCollapsed" AutomationProperties.Name="파일명 분석 결과">
+   <Expander.Header><StackPanel><TextBlock Foreground="{DynamicResource TextBrush}" Text="분석 결과" FontWeight="SemiBold"/><TextBlock x:Name="ResultsSummary" Text="아직 분석하지 않았습니다." TextTrimming="CharacterEllipsis" Foreground="{DynamicResource SubBrush}" FontSize="12" AutomationProperties.LiveSetting="Polite"/></StackPanel></Expander.Header>
+   <Grid>
+    <StackPanel x:Name="BusyPanel" Visibility="Collapsed" VerticalAlignment="Center" Margin="24"><TextBlock Foreground="{DynamicResource TextBrush}" x:Name="BusyText" Text="파일명을 분석하고 있습니다." TextWrapping="Wrap" FontSize="16"/><ProgressBar x:Name="Progress" IsIndeterminate="True" Height="4" Margin="0,16,0,12"/><TextBlock Text="파일은 이동하지 않습니다. 취소 버튼으로 중단할 수 있습니다." Foreground="{DynamicResource SubBrush}" TextWrapping="Wrap"/></StackPanel>
+    <Grid x:Name="ResultContent" Visibility="Collapsed"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+   <CheckBox x:Name="RepeatedOnly" Content="2개 이상만 보기" IsChecked="True" VerticalAlignment="Center" Margin="0,0,12,10" Click="FilterChanged"/>
+  <UniformGrid Grid.Row="1" Columns="3" Margin="0,0,0,14">
+   <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="5" Padding="14" Margin="0,0,6,0"><StackPanel><TextBlock Text="전체 파일" Foreground="{DynamicResource SubBrush}" FontSize="12"/><TextBlock Foreground="{DynamicResource TextBrush}" x:Name="TotalText" Text="—" FontSize="24" FontWeight="SemiBold"/></StackPanel></Border>
+   <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="5" Padding="14" Margin="0,0,6,0"><StackPanel><TextBlock Text="패턴 일치" Foreground="{DynamicResource SubBrush}" FontSize="12"/><TextBlock Foreground="{DynamicResource TextBrush}" x:Name="MatchedText" Text="—" FontSize="24" FontWeight="SemiBold"/></StackPanel></Border>
+   <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="5" Padding="14"><StackPanel><TextBlock Text="전체 그룹" Foreground="{DynamicResource SubBrush}" FontSize="12"/><TextBlock Foreground="{DynamicResource TextBrush}" x:Name="GroupsText" Text="—" FontSize="24" FontWeight="SemiBold"/></StackPanel></Border>
+  </UniformGrid>
+  <Grid Grid.Row="2"><Grid.ColumnDefinitions><ColumnDefinition Width="0.9*" MinWidth="210"/><ColumnDefinition Width="12"/><ColumnDefinition Width="1.1*" MinWidth="260"/></Grid.ColumnDefinitions>
+   <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><TextBlock Foreground="{DynamicResource TextBrush}" Text="구분값별 개수 · 많은 순" FontWeight="SemiBold" Margin="0,0,0,10"/>
+    <DataGrid x:Name="GroupGrid" Grid.Row="1" IsReadOnly="True" SelectionMode="Single" SelectionChanged="GroupChanged" EnableRowVirtualization="True" AutomationProperties.Name="파일명 구분값별 개수"><DataGrid.Columns>
+     <DataGridTextColumn Header="구분값" Binding="{Binding Key}" Width="*"/>
+     <DataGridTemplateColumn Header="비율" Width="65"><DataGridTemplateColumn.CellTemplate><DataTemplate><ProgressBar Value="{Binding Ratio}" Maximum="100" Height="5" Width="50" VerticalAlignment="Center" Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource LineBrush}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+     <DataGridTextColumn Header="개수" Binding="{Binding Count}" Width="55"/>
+    </DataGrid.Columns></DataGrid>
+    <DockPanel Grid.Row="2" Margin="0,8,0,0"><Button x:Name="GroupPrevious" Content="이전" Click="PreviousGroups" Padding="8,4" MinWidth="0"/><Button x:Name="GroupNext" Content="다음" Click="NextGroups" Padding="8,4" MinWidth="0" Margin="5,0"/><TextBlock Foreground="{DynamicResource TextBrush}" x:Name="GroupPageText" FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap"/></DockPanel>
+    <TextBlock x:Name="UnmatchedText" Grid.Row="3" Foreground="{DynamicResource SubBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"/>
+   </Grid>
+   <Grid Grid.Column="2"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><TextBlock Foreground="{DynamicResource TextBrush}" x:Name="FileTitle" Text="그룹을 선택하세요" FontWeight="SemiBold" Margin="0,0,0,10" TextTrimming="CharacterEllipsis"/>
+    <DataGrid x:Name="FileGrid" Grid.Row="1" IsReadOnly="True" SelectionMode="Single" EnableRowVirtualization="True" AutomationProperties.Name="선택한 구분값의 파일 목록" MouseDoubleClick="FileDetails"><DataGrid.Columns>
+     <DataGridTextColumn Header="파일 이름" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="형식" Binding="{Binding Extension}" Width="60"/>
+    </DataGrid.Columns></DataGrid>
+    <DockPanel Grid.Row="2" Margin="0,8,0,0"><Button x:Name="FilePrevious" Content="이전" Click="PreviousFiles" Padding="8,4" MinWidth="0"/><Button x:Name="FileNext" Content="다음" Click="NextFiles" Padding="8,4" MinWidth="0" Margin="5,0"/><TextBlock Foreground="{DynamicResource TextBrush}" x:Name="FilePageText" FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap"/></DockPanel>
+    <Button x:Name="CreateRuleButton" Grid.Row="3" Content="이 그룹으로 규칙 만들기" Style="{StaticResource PrimaryButton}" Click="RuleClick" Margin="0,10,0,0" HorizontalAlignment="Right" IsEnabled="False"/>
+   </Grid>
+  </Grid>
+  <TextBlock x:Name="ResultText" Grid.Row="3" Foreground="{DynamicResource SubBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,12,0,0" Text="분석은 파일을 이동하지 않습니다. 여러 구분값이 있는 파일은 각 그룹에서 집계합니다."/>
+    </Grid>
+   </Grid>
+  </Expander>
+ </Grid>
+ </ScrollViewer>
+</UserControl>

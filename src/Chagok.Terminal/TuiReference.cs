@@ -1,4 +1,4 @@
-using FileOrganizer.Core;
+using Chagok.Core;
 
 namespace Chagok.Terminal;
 
@@ -29,7 +29,7 @@ internal static class TuiReference
                     ValidateRoot(nextRoot, source, session.Storage.DirectoryPath);
                     FilenameGroups.Validate(new(nextBracket, nextRecursive, nextExpression));
                     var loaded = ReferenceOrganization.ReadTargets(nextRoot, token)
-                        .Where(t => !PathSafety.IsWithin(t.Path, session.Storage.DirectoryPath))
+                        .Where(t => !session.Storage.IsDataPath(t.Path))
                         .Select(t => targets.FirstOrDefault(old => PathSafety.Comparer.Equals(old.Path, t.Path)) ?? t).ToList();
                     if (loaded.Count == 0) throw new ArgumentException("기준 폴더에 링크가 아닌 하위 폴더가 없습니다.");
                     path = source.Path; root = PathSafety.Normalize(nextRoot); recursive = nextRecursive; bracket = nextBracket; expression = nextExpression;
@@ -84,7 +84,7 @@ internal static class TuiReference
                 {
                     result?.Dispose(); result = null;
                     TerminalText.Header("기준 폴더 분석 중 · 파일 이동 없음"); TerminalText.Line("Ctrl+C 안전하게 중단 · 설정은 저장하지 않습니다.");
-                    var exclusions = session.Settings.Folders.SelectMany(f => f.Rules).Select(DestinationPaths.Resolve).Append(session.Storage.DirectoryPath).ToArray();
+                    var exclusions = session.Settings.Folders.SelectMany(f => f.Rules).Select(DestinationPaths.Resolve).Concat(session.Storage.ProtectedDirectories).ToArray();
                     result = await Task.Run(() => ReferenceOrganization.Scan(folder, root, targets, exclusions,
                         Path.Combine(session.Storage.DirectoryPath, "scan-cache"), new(bracket, recursive, expression), token), token);
                     scan = false;
@@ -99,7 +99,7 @@ internal static class TuiReference
     }
     private static void ValidateRoot(string root, FolderSpec source, string data)
     {
-        if (PathSafety.IsWithin(root, data)) throw new ArgumentException("차곡 데이터 저장소는 기준 폴더로 사용할 수 없습니다.");
+        if (new Storage(data).IsDataPath(root)) throw new ArgumentException("차곡 데이터 저장소는 기준 폴더로 사용할 수 없습니다.");
         if (PathSafety.IsWithin(source.Path, root)) throw new ArgumentException("검사 위치는 기준 폴더와 같거나 그 안에 둘 수 없습니다.");
     }
     private static async Task<ConsoleKey> ReviewAsync(TerminalSession session, IRecycleBin recycle, FolderSpec folder,

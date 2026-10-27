@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using FileOrganizer.Core;
-using FileOrganizer.Windows;
+using Chagok.Core;
+using Chagok.Windows;
 
 namespace Chagok.Terminal;
 

@@ -1,3 +1,26 @@
+## 0.9.0 버전 확정·커밋 범위 (2026-10-27)
+
+- 사용자가 앞선 이름 통일·PATH 등록·기존 데이터 가져오기를 확인하고 커밋·푸시·태그 생성을 요청했다. 설치형 지원은 의견을 요청한 별도 주제이므로 이번 소스에 추가하지 않는다.
+- Windows/Terminal 프로젝트와 HelpCatalog 버전을 0.9.0으로 맞췄다. 기존 v0.8.0 태그를 보존하고 새 v0.9.0 태그를 사용한다. 설치형 소스·설치 패키지·GitHub 릴리스는 포함하지 않는다.
+- 0.9.0 소스로 핵심 검사 169/169, 도움말 검사 53회(22개 명령·JSON 문서 일치) 통과. Windows x64 자체 포함 단일 Chagok.exe 게시 성공. 이전 기능의 실제 macOS PTY 검증은 아래 2026-10-26 기록을 참고한다.
+- 버전 외 기능 구현은 앞서 검증한 소스를 유지했다. 실제 Windows의 구체적인 수동 확인 항목 전체가 검증됐다고 해석하지 않는다.
+- 빌드·검사·게시 로그: /private/tmp/chagok090-{build,checks,help,publish}.log.
+
+## Chagok 이름 통일·고정 EXE·사용자 PATH 명령 (2026-10-26)
+
+- GitHub origin은 이미 `ksyrang/Chagok`이다. 로컬 저장소 폴더를 `FileOrganizer`에서 `Chagok`으로 변경했다. Core/Windows/Checks 프로젝트·파일·네임스페이스, XAML 클래스·참조, 터미널 연결 소스, 개발 명령·문서를 Chagok으로 통일했다. AssemblyName은 기존 Chagok을 유지한다.
+- 게시 후 버전 파일명으로 바꾸던 MSBuild Target을 제거해 `Chagok.exe`로 고정했다. ZIP에는 버전을 남기며 앱 정보와 version 명령으로 버전을 확인한다. 과거 배포 ZIP·태그는 변경하지 않는다.
+- Windows 배포본의 `path add/status/remove`를 추가했다. 사용자 PATH의 현재 EXE 폴더만 등록·조회·해제한다. 다른 항목·환경 변수 원문·레지스트리 값 형식을 보존하며 시스템 PATH는 변경하지 않는다. 중복 등록을 피하고 변경을 알리되 기존 터미널은 재시작해야 한다. 이 명령은 설정·기록·세션 잠금을 열지 않는다.
+- 사용자 선택에 따라 기본 데이터를 `%LOCALAPPDATA%\Chagok`으로 변경했다. 첫 기본 데이터 사용 시 구버전 잠금을 잡고 settings.json/history.jsonl/settings.json.backup 원문을 임시 폴더에 복사·검증한 뒤 새 폴더로 전환한다. 기존 원본은 보존하고 이미 있는 새 데이터/완료 표식은 우선한다. 빈 새 폴더는 가져오며, 다른 파일만 있는 새 폴더·손상·복사 오류·링크는 원본 보존 후 중단한다. --data-dir 별도 위치는 가져오지 않는다. 구버전 단일 실행 mutex 이름과 구버전 임시 파일 제외 기준은 호환성을 위해 유지한다. 새 이동 임시 파일은 `.chagok-`를 사용하고 규칙 검사·파일명 분석·기준 폴더 분석 모두 새/구 접두사를 제외한다.
+- 핵심 검사 **169/169 통과**. 기존 TUI 테스트가 실제 안내 `F1/? 도움말` 대신 예전 문구를 요구하던 기대값을 수정했다. 화면 동작은 변경하지 않았다. PATH 항목 보존·중복·해제·금지 경로 및 새/구 임시 파일 제외 회귀를 추가했다. 데이터 가져오기 9개 검사에서 원문·ID·백업·부분 기록 보존, 캐시 제외, 덮어쓰기 방지, 빈/충돌 폴더, 손상·부분 복사 실패와 재시도, 구버전 잠금·해제, 링크·겹침 차단, 완료 표식, 새/구 데이터 보호를 확인했다. 검사에는 임시 데이터만 사용했다.
+- 도움말·인수 검사 **53회 통과**, 명령 22개와 `docs/cli-reference.json`이 런타임 출력과 일치한다. help/version 및 비 Windows PATH 명령 거부·잘못된 인수 처리에서 데이터 폴더가 만들어지지 않는 것을 확인했다.
+- 실제 macOS CLI/PTY smoke: CLI 명령 18개, 파일 105개 이동, 2페이지 조회, 선택 이동, 설정 공유, 다른 프로세스 중복 실행 차단, 비정상 종료 후 잠금 해제, TUI 탐색 통과. 증거 `/private/var/folders/6v/d8xjf8d57lg5yfbg7qgmv7g00000gn/T/chagok-cli-e2e-ut7d_jwy`.
+- 실제 macOS 기준 폴더 TUI smoke(별칭·복수 후보·그룹 지정·취소/명시 이동·캐시 정리)와 파일명 분석 CLI/TUI smoke(조회 무변경·조건/필터·작은 창·규칙 초안·확인 이동·캐시 정리)도 통과했다. 증거 `/private/tmp/chagok-reference-tui-2d60vuku`, `/private/var/folders/6v/d8xjf8d57lg5yfbg7qgmv7g00000gn/T/chagok-analysis-oonacj29`.
+- Windows x64 자체 포함 단일 EXE 게시 성공, 경고·오류 0개. PE x64/console, 번들 463개 항목, Chagok.dll/Chagok.Core.dll과 게시한 빌드 결과의 바이트 일치, 브랜드·탐색기 자산 8개 원본 보존, 최종 src/tests/scripts와 검증 복사본 일치를 확인했다. EXE 77,283,379 bytes, SHA256 `0aa4aa3d46f3bd25dd9860891a5219f66141ed20226a0b3e5a3aaebeb9f348c1`.
+- 실제 Windows의 PATH 등록·해제·새 터미널 명령 검색·첫 데이터 가져오기·로그인 세션 간 구버전 차단·GUI/XAML·탐색기 연동은 이 macOS 환경에서 실행하지 못했다. Windows 확인 항목을 windows-test-guide.md에 추가했다. NuGet 복원은 공식 서버에 연결해 수행했다.
+- 검증 중 외장 디스크 SDK의 AppleDouble 보조 파일을 MSBuild가 읽는 오류가 있어 `._*`를 제외한 내부 SDK·소스 복사본을 사용했다. 로그 `/private/tmp/chagok-rename-{build,checks,help,terminal,reference,analysis,publish}.log`, 패키지 검증 `/private/tmp/chagok-rename-package-verification.json`.
+- 커밋·푸시·버전 변경·태그·GitHub 릴리스는 수행하지 않았다.
+
 ## 0.8.0 · 정리 방식 시작 화면과 기준 폴더 TUI (2026-10-20)
 
 - GUI 시작 화면에 규칙으로 정리/기준 폴더로 정리를 나란히 배치했다. 기존 규칙 목록·검사·실행 화면은 유지하고 시작 화면으로 돌아가는 링크를 추가했다. 파일명 분석은 보조 기능으로 유지한다.
