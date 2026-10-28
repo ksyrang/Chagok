@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "program": "Chagok",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "executable": "Chagok.exe",
   "commands": [
     {

@@ -35,6 +35,8 @@ UninstallIcon "${PAYLOAD}/chagok.ico"
 
 Var AppGuard
 Var RegisterPath
+Var DesktopShortcut
+Var DesktopCheckbox
 Var PathCheckbox
 Var PreserveData
 Var PreserveCheckbox
@@ -86,7 +88,18 @@ Function .onInit
   ${IfNot} ${Errors}
     StrCpy $RegisterPath $0
   ${EndIf}
+  StrCpy $DesktopShortcut 1
+  ClearErrors
+  ReadRegDWORD $0 HKCU "${REGKEY}" "DesktopShortcut"
+  ${IfNot} ${Errors}
+    StrCpy $DesktopShortcut $0
+  ${EndIf}
   ${GetParameters} $0
+  ClearErrors
+  ${GetOptions} $0 "/NODESKTOP" $1
+  ${IfNot} ${Errors}
+    StrCpy $DesktopShortcut 0
+  ${EndIf}
   ClearErrors
   ${GetOptions} $0 "/NOPATH" $1
   ${IfNot} ${Errors}
@@ -97,17 +110,21 @@ Function .onInit
 FunctionEnd
 
 Function InstallOptions
-  !insertmacro MUI_HEADER_TEXT "터미널 명령 등록" "사용자 PATH에 설치 위치를 등록할지 선택하세요."
+  !insertmacro MUI_HEADER_TEXT "설치 옵션" "바로가기 추가와 터미널 명령 등록 여부를 선택하세요."
   nsDialogs::Create 1018
   Pop $Dialog
-  ${NSD_CreateCheckbox} 0 12u 100% 28u "터미널에서 chagok 명령 사용 (사용자 PATH 등록)"
+  ${NSD_CreateCheckbox} 0 8u 100% 20u "바탕화면에 차곡 바로가기 추가(&D)"
+  Pop $DesktopCheckbox
+  ${NSD_SetState} $DesktopCheckbox $DesktopShortcut
+  ${NSD_CreateCheckbox} 0 38u 100% 28u "터미널에서 chagok 명령 사용 (사용자 PATH 등록)"
   Pop $PathCheckbox
   ${NSD_SetState} $PathCheckbox $RegisterPath
-  ${NSD_CreateLabel} 0 50u 100% 75u "등록하면 어느 폴더에서든 chagok tui를 실행할 수 있습니다.$\r$\n변경은 터미널 앱을 완전히 종료한 뒤 다시 열면 적용됩니다.$\r$\n시스템 PATH와 다른 프로그램의 항목은 변경하지 않습니다.$\r$\n해제하면 설치 프로그램이 추가했던 항목만 제거합니다."
+  ${NSD_CreateLabel} 0 74u 100% 64u "등록하면 어느 폴더에서든 chagok tui를 실행할 수 있습니다.$\r$\n변경은 터미널 앱을 완전히 종료한 뒤 다시 열면 적용됩니다.$\r$\n시스템 PATH와 다른 프로그램의 항목은 변경하지 않습니다.$\r$\n해제하면 설치 프로그램이 추가했던 항목만 제거합니다."
   Pop $0
   nsDialogs::Show
 FunctionEnd
 Function InstallOptionsLeave
+  ${NSD_GetState} $DesktopCheckbox $DesktopShortcut
   ${NSD_GetState} $PathCheckbox $RegisterPath
 FunctionEnd
 
@@ -140,6 +157,9 @@ Section "차곡 설치"
   ${If} $RegisterPath == 1
     StrCpy $2 "-RegisterPath"
   ${EndIf}
+  ${If} $DesktopShortcut == 1
+    StrCpy $2 "$2 -DesktopShortcut"
+  ${EndIf}
   nsExec::ExecToStack '"$WINDIR\Sysnative\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\support.ps1" -Mode Configure -InstallDirectory "$INSTDIR" -Version "${VERSION}" $2'
   Pop $0
   Pop $1
@@ -160,6 +180,7 @@ Section "차곡 설치"
   WriteRegStr HKCU "${REGKEY}" "UninstallString" '$\"$INSTDIR\uninstall.exe$\"'
   WriteRegStr HKCU "${REGKEY}" "QuietUninstallString" '$\"$INSTDIR\uninstall.exe$\" /S'
   WriteRegDWORD HKCU "${REGKEY}" "RegisterPath" $RegisterPath
+  WriteRegDWORD HKCU "${REGKEY}" "DesktopShortcut" $DesktopShortcut
   WriteRegDWORD HKCU "${REGKEY}" "NoModify" 1
   WriteRegDWORD HKCU "${REGKEY}" "NoRepair" 1
   ${If} ${Errors}

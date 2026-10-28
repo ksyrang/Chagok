@@ -3,8 +3,9 @@
 param(
     [Parameter(Mandatory = $true)][ValidateSet('Prepare', 'Configure', 'Uninstall')][string]$Mode,
     [Parameter(Mandatory = $true)][string]$InstallDirectory,
-    [string]$Version = '0.10.1',
+    [string]$Version = '0.10.2',
     [switch]$RegisterPath,
+    [switch]$DesktopShortcut,
     [switch]$RemoveData
 )
 Set-StrictMode -Version Latest
@@ -146,9 +147,12 @@ function Remove-ShellRegistration {
         if ($owned) { [Microsoft.Win32.Registry]::CurrentUser.DeleteSubKeyTree($menu, $false) }
     }
 }
-function Update-Shortcut([bool]$remove) {
-    $directory = Join-Path ([Environment]::GetFolderPath('Programs')) 'Chagok'
-    $path = Join-Path $directory 'Chagok.lnk'
+function Update-Shortcut([bool]$remove, [bool]$desktop = $false) {
+    $directory = if ($desktop) { [Environment]::GetFolderPath('DesktopDirectory') }
+                 else { Join-Path ([Environment]::GetFolderPath('Programs')) 'Chagok' }
+    if (-not $directory) { throw '바로가기 폴더를 찾을 수 없습니다.' }
+    $name = if ($desktop) { '차곡.lnk' } else { 'Chagok.lnk' }
+    $path = Join-Path $directory $name
     Assert-NoLinks $path
     if ($remove -and -not [IO.File]::Exists($path)) { return }
     $shell = New-Object -ComObject WScript.Shell
@@ -156,11 +160,11 @@ function Update-Shortcut([bool]$remove) {
         $shortcut = $shell.CreateShortcut($path)
         if ([IO.File]::Exists($path) -and -not (Same-Path $shortcut.TargetPath $executable)) {
             if ($remove) { return }
-            throw '시작 메뉴에 다른 Chagok 바로 가기가 있어 덮어쓰지 않았습니다.'
+            throw "다른 프로그램의 바로가기가 있어 덮어쓰지 않았습니다: $path"
         }
         if ($remove) {
             [IO.File]::Delete($path)
-            if (-not [IO.Directory]::EnumerateFileSystemEntries($directory).GetEnumerator().MoveNext()) { [IO.Directory]::Delete($directory) }
+            if (-not $desktop -and -not [IO.Directory]::EnumerateFileSystemEntries($directory).GetEnumerator().MoveNext()) { [IO.Directory]::Delete($directory) }
         } else {
             [void][IO.Directory]::CreateDirectory($directory)
             $shortcut.TargetPath = $executable
@@ -232,6 +236,8 @@ try {
             }
             Set-Phase '시작 메뉴 등록'
             Update-Shortcut $false
+            Set-Phase '바탕화면 바로가기 설정'
+            Update-Shortcut (-not [bool]$DesktopShortcut) $true
             Set-Phase '설치 정보 저장'
             $state.Version = $Version
             $state.RegisterPath = [bool]$RegisterPath
@@ -256,6 +262,8 @@ try {
             }
             Set-Phase '시작 메뉴 해제'
             Update-Shortcut $true
+            Set-Phase '바탕화면 바로가기 해제'
+            Update-Shortcut $true $true
             if ($RemoveData) {
                 Set-Phase '선택한 설정과 기록 삭제'
                 # 구버전 원본도 지워 재설치 시 삭제한 설정을 다시 가져오지 않는다. 알 수 없는 파일은 남긴다.

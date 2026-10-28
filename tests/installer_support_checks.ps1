@@ -35,6 +35,43 @@ try {
         $calls = @($installerSource | Where-Object { $_.Contains('nsExec::ExecToStack') -and $_.Contains('-Mode ' + $mode) })
         Check ($calls.Count -eq 1 -and $calls[0].Contains('-InstallDirectory "$INSTDIR"')) ('설치 단계의 경로 전달 누락: ' + $mode)
     }
+    # COM 호출만 대역으로 바꾸고 실제 임시 파일로 생성·해제·충돌 보존을 검사한다.
+    $desktopTest = Join-Path $testRoot 'desktop'
+    $executable = Join-Path $InstallDirectory 'Chagok.exe'
+    $script:shortcutTarget = $null
+    $script:savedShortcut = $null
+    $script:fakeShell = [pscustomobject]@{}
+    $script:fakeShell | Add-Member ScriptMethod CreateShortcut {
+        param($path)
+        $link = [pscustomobject]@{ TargetPath = $script:shortcutTarget; WorkingDirectory = ''; Description = ''; Path = $path }
+        $link | Add-Member ScriptMethod Save {
+            [IO.File]::WriteAllText($this.Path, 'shortcut stub')
+            $script:shortcutTarget = $this.TargetPath
+            $script:savedShortcut = $this
+        }
+        return $link
+    }
+    $shortcutFunction = @($ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Update-Shortcut' }, $false))[0].Extent.Text
+    $shortcutFunction = $shortcutFunction.Replace("[Environment]::GetFolderPath('DesktopDirectory')", '$desktopTest')
+    $shortcutFunction = $shortcutFunction.Replace('New-Object -ComObject WScript.Shell', '$script:fakeShell')
+    $shortcutFunction = $shortcutFunction.Replace('[void][Runtime.InteropServices.Marshal]::ReleaseComObject($shell)', '$null = $shell')
+    Invoke-Expression $shortcutFunction
+    $linkPath = Join-Path $desktopTest '차곡.lnk'
+    Update-Shortcut $true $true
+    Check (-not [IO.Directory]::Exists($desktopTest)) '선택 해제 시 없는 바탕화면을 생성하지 않음'
+    Update-Shortcut $false $true
+    Check ([IO.File]::Exists($linkPath)) '바탕화면 바로가기 생성'
+    Check ($script:savedShortcut.TargetPath -eq $executable -and $script:savedShortcut.WorkingDirectory -eq $InstallDirectory) '바로가기 대상과 작업 폴더'
+    Update-Shortcut $false $true
+    Check ([IO.File]::Exists($linkPath)) '같은 대상 재설치'
+    Update-Shortcut $true $true
+    Check (-not [IO.File]::Exists($linkPath) -and [IO.Directory]::Exists($desktopTest)) '소유한 바로가기만 삭제하고 바탕화면 폴더 보존'
+    [IO.File]::WriteAllText($linkPath, 'foreign shortcut')
+    $script:shortcutTarget = Join-Path $testRoot 'other.exe'
+    Update-Shortcut $true $true
+    Check ([IO.File]::ReadAllText($linkPath) -eq 'foreign shortcut') '다른 대상 바로가기 제거 보존'
+    Must-Fail { Update-Shortcut $false $true }
+    Check ([IO.File]::ReadAllText($linkPath) -eq 'foreign shortcut') '다른 대상 바로가기 덮어쓰기 거부'
     [void][IO.Directory]::CreateDirectory($InstallDirectory)
     Check (Same-Path 'C:\Tools\Chagok' 'c:\tools\chagok\') '경로의 대소문자·끝 구분자'
     Check (Same-Path 'C:/Tools/Chagok' 'c:\tools\chagok') '경로 구분자 차이'

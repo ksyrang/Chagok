@@ -11,8 +11,9 @@ $expectedVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo($Installer).Fil
 $registry = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\Chagok'
 $dataRoot = [Environment]::GetFolderPath('LocalApplicationData')
 $dataDirectories = @((Join-Path $dataRoot 'Chagok'), (Join-Path $dataRoot 'FileOrganizer'))
+$desktop = Join-Path ([Environment]::GetFolderPath('DesktopDirectory')) '차곡.lnk'
 $menu = Join-Path ([Environment]::GetFolderPath('Programs')) 'Chagok'
-foreach ($path in @($dataDirectories) + @($menu)) {
+foreach ($path in @($dataDirectories) + @($menu, $desktop)) {
     if (Test-Path -LiteralPath $path) { throw "기존 데이터를 보존하기 위해 검사를 중단했습니다: $path" }
 }
 $existing = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey($registry)
@@ -28,6 +29,7 @@ function Check([bool]$value, [string]$message) {
     if (-not $value) { throw $message }
     $script:checks++
 }
+function Same-Target([string]$a, [string]$b) { return [string]::Equals($a, $b, [StringComparison]::OrdinalIgnoreCase) }
 function User-Path { return $environment.GetValue('Path', '', [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames) }
 function Setup([string]$directory, [string]$options = '', [int]$code = 0) {
     # NSIS의 /D는 마지막에 두고 경로 전체에 따옴표를 붙이지 않는다.
@@ -50,6 +52,17 @@ try {
     Setup $directory
     $state = Get-Content -Raw -LiteralPath (Join-Path $directory 'chagok-install.json') | ConvertFrom-Json
     Check ($state.PathOwned -and $state.RegisterPath) '기본 PATH 등록'
+    Check ([IO.File]::Exists($desktop)) '바탕화면 기본 추가'
+    $shell = New-Object -ComObject WScript.Shell
+    try {
+        $link = $shell.CreateShortcut($desktop)
+        Check (Same-Target $link.TargetPath (Join-Path $directory 'Chagok.exe')) '바탕화면 실행 대상'
+        Check (Same-Target $link.WorkingDirectory $directory) '바탕화면 작업 폴더'
+    } finally { [void][Runtime.InteropServices.Marshal]::ReleaseComObject($shell) }
+    Setup $directory '/NODESKTOP'
+    Check (-not [IO.File]::Exists($desktop)) '바탕화면 선택 해제 재설치'
+    Setup $directory
+    Check (-not [IO.File]::Exists($desktop)) '바탕화면 이전 선택 유지'
     Check ((User-Path) -eq ($baseline + ';' + $directory)) '다른 PATH 항목과 환경 변수 보존'
     Check ($environment.GetValueKind('Path') -eq [Microsoft.Win32.RegistryValueKind]::ExpandString) 'PATH 값 형식 보존'
     $env:PATH = [Environment]::ExpandEnvironmentVariables([Environment]::GetEnvironmentVariable('PATH', 'Machine') + ';' + (User-Path))
@@ -78,8 +91,10 @@ try {
     }
     $noPath = Join-Path $testRoot 'PATH 등록 안 함'
     Setup $noPath '/NOPATH'
+    Check ([IO.File]::Exists($desktop)) '새 설치 바탕화면 기본 선택'
     Check ((User-Path) -eq $baseline) '최초 설치 PATH 해제'
     Uninstall $noPath $true
+    Check (-not [IO.File]::Exists($desktop)) '제거 시 바탕화면 정리'
     foreach ($data in $dataDirectories) {
         Check (-not [IO.File]::Exists((Join-Path $data 'settings.json'))) '명시한 새/구 설정 삭제'
         Check (-not [IO.File]::Exists((Join-Path $data 'history.jsonl'))) '명시한 새/구 기록 삭제'
@@ -91,7 +106,19 @@ try {
     Setup $manual
     $state = Get-Content -Raw -LiteralPath (Join-Path $manual 'chagok-install.json') | ConvertFrom-Json
     Check (-not $state.PathOwned -and $state.RegisterPath) '사용자 PATH 소유권을 가져오면 안 됨'
+    $shell = New-Object -ComObject WScript.Shell
+    $foreign = Join-Path $env:WINDIR 'notepad.exe'
+    try {
+        $link = $shell.CreateShortcut($desktop)
+        $link.TargetPath = $foreign
+        $link.Save()
+    } finally { [void][Runtime.InteropServices.Marshal]::ReleaseComObject($shell) }
+    Setup $manual '/NODESKTOP'
+    Check ([IO.File]::Exists($desktop)) '선택 해제 시 다른 대상 바로가기 보존'
     Uninstall $manual
+    $shell = New-Object -ComObject WScript.Shell
+    try { Check (Same-Target ($shell.CreateShortcut($desktop)).TargetPath $foreign) '제거 시 다른 대상 바로가기 보존' }
+    finally { [void][Runtime.InteropServices.Marshal]::ReleaseComObject($shell) }
     Check ((User-Path) -eq $manualValue) '수동 등록 PATH는 제거 후 보존'
     Check ($environment.GetValueKind('Path') -eq [Microsoft.Win32.RegistryValueKind]::String) 'REG_SZ 원문 형식 보존'
     [pscustomobject]@{ checksPassed = $checks; pathChoices = $true; dataChoices = $true; unicodeDirectory = $true; unrelatedFilesPreserved = $true } | ConvertTo-Json -Compress
@@ -101,7 +128,7 @@ try {
     $environment.Dispose()
     $env:PATH = $beforeProcess
     # 기존 데이터가 없음을 확인한 테스트 프로필의 생성물만 정리한다.
-    foreach ($path in @($dataDirectories) + @($menu, $testRoot)) {
+    foreach ($path in @($dataDirectories) + @($menu, $desktop, $testRoot)) {
         if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Recurse -Force }
     }
     [Microsoft.Win32.Registry]::CurrentUser.DeleteSubKeyTree($registry, $false)
