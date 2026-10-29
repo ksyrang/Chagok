@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>차곡 0.10.6 · 다른 PC 테스트 안내</title>
+  <style>
+    :root { color-scheme: light; --ink:#202d3b; --muted:#516274; --line:#d8e2e9; --paper:#fff; --bg:#f4f8fa; --accent:#24675f; --soft:#eaf5f2; --warn:#fff7e7; --warn-line:#c18a29; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; color:var(--ink); background:var(--bg); font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif; font-size:16px; line-height:1.65; }
+    a { color:#155f72; text-underline-offset:3px; }
+    a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline:3px solid #c77421; outline-offset:3px; }
+    .shell { max-width:1060px; margin:auto; padding:32px 24px 80px; }
+    header { padding:34px 36px; color:#fff; background:#203f40; border-radius:16px; }
+    .eyebrow { margin:0 0 8px; color:#bfe2d6; font-size:.88rem; font-weight:700; letter-spacing:.06em; }
+    h1 { margin:0; font-size:clamp(1.85rem,4vw,2.75rem); line-height:1.25; }
+    header p { max-width:720px; margin:14px 0 0; color:#e4efec; }
+    .meta { display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; }
+    .meta span { padding:5px 11px; background:#325854; border-radius:999px; font-size:.86rem; }
+    .layout { display:grid; grid-template-columns:210px minmax(0,1fr); gap:28px; margin-top:28px; align-items:start; }
+    nav { position:sticky; top:20px; padding:8px 0; }
+    nav p { font-weight:700; margin:0 0 10px; }
+    nav a { display:block; padding:7px 0; text-decoration:none; color:var(--muted); }
+    nav a:hover { color:var(--accent); text-decoration:underline; }
+    main { min-width:0; }
+    section { margin-bottom:18px; padding:26px 30px; background:var(--paper); border:1px solid var(--line); border-radius:14px; scroll-margin-top:18px; }
+    .section-top { display:flex; gap:14px; align-items:baseline; }
+    .number { color:var(--accent); font-weight:800; }
+    h2 { font-size:1.35rem; line-height:1.35; margin:0; }
+    h3 { font-size:1.05rem; margin:24px 0 8px; }
+    p { margin:10px 0; }
+    ul,ol { padding-left:1.4em; }
+    li { margin:.38em 0; }
+    .notice { margin:16px 0; padding:13px 16px; border-left:4px solid var(--warn-line); background:var(--warn); }
+    .tip { margin:16px 0; padding:13px 16px; background:var(--soft); border-left:4px solid var(--accent); }
+    .checks { list-style:none; margin:10px 0 0; padding:0; }
+    .checks li { margin:0; border-top:1px solid var(--line); }
+    .checks label { display:flex; gap:11px; align-items:flex-start; padding:12px 0; cursor:pointer; }
+    .checks input { flex:none; width:19px; height:19px; margin:4px 0 0; accent-color:var(--accent); }
+    .checks small { display:block; color:var(--muted); font-size:.9rem; margin-top:3px; }
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; text-align:left; }
+    th,td { padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+    th { color:var(--muted); background:#f5f8f9; font-size:.9rem; }
+    pre { overflow:auto; padding:15px 18px; background:#f0f5f6; border-radius:8px; font: .92rem/1.6 ui-monospace,Consolas,monospace; }
+    code { overflow-wrap:anywhere; font-family:ui-monospace,Consolas,monospace; }
+    .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
+    .button, button { display:inline-block; border:1px solid var(--accent); border-radius:8px; padding:10px 16px; font:inherit; font-weight:700; cursor:pointer; text-decoration:none; color:var(--accent); background:#fff; }
+    .button.primary { color:#fff; background:var(--accent); }
+    .button:hover,button:hover { filter:brightness(.95); }
+    .muted { color:var(--muted); }
+    textarea { width:100%; min-height:145px; padding:12px; border:1px solid #a9bac3; border-radius:8px; font:inherit; resize:vertical; }
+    footer { margin-top:20px; color:var(--muted); font-size:.9rem; }
+    @media(max-width:720px) { .shell { padding:16px 14px 48px; } header { padding:26px 22px; } .layout { display:block; } nav { position:static; display:flex; flex-wrap:wrap; gap:3px 16px; margin:0 0 16px; } nav p { width:100%; } nav a { padding:4px 0; } section { padding:22px 19px; } }
+    @media print { body { background:#fff; font-size:10pt; } .shell { max-width:none; padding:0; } header { color:#000; background:#fff; border:1px solid #aaa; padding:16px; } header p,.eyebrow { color:#222; } .meta span { color:#222; background:#eee; } .layout { display:block; } nav,.actions button,.actions .button { display:none; } section { border:0; border-bottom:1px solid #bbb; border-radius:0; padding:12px 0; break-inside:avoid; } a { color:#000; } }
+    @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <p class="eyebrow">CHAGOK · WINDOWS TEST GUIDE</p>
+    <h1>다른 PC에서 차곡 테스트하기</h1>
+    <p>설치부터 기준 폴더 분석, 이동 계획, 실제 결과까지 순서대로 확인합니다. 아래 체크는 직접 확인한 뒤 표시하세요.</p>
+    <div class="meta"><span>버전 0.10.6</span><span>Windows x64</span><span>테스트 파일 6개</span></div>
+  </header>
+  <div class="layout">
+    <nav aria-label="테스트 순서">
+      <p>테스트 순서</p>
+      <a href="#prepare">01 준비하기</a>
+      <a href="#install">02 설치와 실행</a>
+      <a href="#sample">03 테스트 파일 만들기</a>
+      <a href="#analyze">04 기준 폴더 분석</a>
+      <a href="#review">05 제안과 이동 계획</a>
+      <a href="#move">06 실제 이동 확인</a>
+      <a href="#extra">07 추가 확인</a>
+      <a href="#report">08 결과 남기기</a>
+    </nav>
+    <main>
+      <section id="prepare">
+        <div class="section-top"><span class="number">01</span><h2>준비하기</h2></div>
+        <p>다른 Windows PC에서 이 문서를 열고 아래 설치 파일을 다운로드합니다. 인터넷은 다운로드할 때만 필요합니다.</p>
+        <div class="actions">
+          <a class="button primary" href="https://github.com/ksyrang/Chagok/releases/download/v0.10.6/Chagok-v0.10.6-setup-win-x64.exe">0.10.6 설치 파일 다운로드</a>
+          <a class="button" href="https://github.com/ksyrang/Chagok/releases/tag/v0.10.6">릴리스 페이지 보기</a>
+        </div>
+        <div class="notice"><strong>테스트 전용 폴더를 사용하세요.</strong> 실제 업무 파일이나 기존 다운로드 폴더는 선택하지 않습니다. 테스트가 끝날 때까지 테스트 폴더를 지우지 마세요.</div>
+        <p class="muted">0.10.6은 테스트 릴리스입니다. 새 화면과 이동 흐름을 이 PC에서 직접 확인하기 위한 안내입니다.</p>
+      </section>
+
+      <section id="install">
+        <div class="section-top"><span class="number">02</span><h2>설치하고 실행하기</h2></div>
+        <ol><li>다운로드한 <code>Chagok-v0.10.6-setup-win-x64.exe</code>를 실행합니다.</li><li>설치 위치와 바로가기·PATH 옵션을 확인하고 설치합니다.</li><li>차곡을 실행합니다. 이전 차곡이 실행 중이면 트레이에서도 종료한 뒤 다시 시도합니다.</li></ol>
+        <ul class="checks">
+          <li><label><input type="checkbox"><span>설치 위치와 바탕화면 바로가기·터미널 명령 등록 옵션을 확인할 수 있다.<small>처음 설치할 때 두 옵션은 기본으로 선택됩니다. 원하는 경우 선택을 해제할 수 있습니다.</small></span></label></li>
+          <li><label><input type="checkbox"><span>설치가 끝나고 시작 메뉴 또는 선택한 바탕화면 바로가기로 차곡이 열린다.</span></label></li>
+          <li><label><input type="checkbox"><span>첫 화면에서 <strong>규칙으로 정리</strong>와 <strong>기준 폴더로 정리</strong>를 볼 수 있다.</span></label></li>
+        </ul>
+        <div class="tip"><strong>터미널 명령도 확인하려면:</strong> PATH 등록을 선택한 경우 PowerShell을 완전히 닫았다가 다시 열고 <code>chagok version</code>을 입력합니다. <code>0.10.6</code>이 표시되는지 확인합니다. GUI가 트레이에 있으면 파일 작업 명령은 별도 단일 실행 제한을 받을 수 있습니다.</div>
+      </section>
+
+      <section id="sample">
+        <div class="section-top"><span class="number">03</span><h2>테스트 폴더와 파일 만들기</h2></div>
+        <p>바탕화면에 새 폴더 <code>차곡 테스트</code>를 만들고 다음 구조를 그대로 준비합니다. <strong>검사할 파일</strong>과 <strong>정리된 기준</strong>은 서로 다른 폴더여야 합니다.</p>
+        <pre>차곡 테스트/
+├─ 검사할 파일/
+│  ├─ 거래처A_견적.txt
+│  ├─ 거래처A_거래처B_회의.txt
+│  ├─ [신규C] 초안.txt
+│  ├─ [신규C] 최종.txt
+│  ├─ [중복D][중복E] 자료.txt
+│  └─ 일반메모.txt
+└─ 정리된 기준/
+   ├─ 거래처A/
+   └─ 거래처B/</pre>
+        <p>빈 텍스트 파일 6개면 충분합니다. 탐색기에서 파일 확장명이 숨겨져 있다면 <strong>보기 → 표시 → 파일 확장명</strong>을 켜고 이름을 확인하세요. 파일 안에는 구별할 수 있는 짧은 내용을 적어도 됩니다.</p>
+        <ul class="checks"><li><label><input type="checkbox"><span>검사할 파일 6개와 비어 있는 기준 하위 폴더 2개를 준비했다.</span></label></li></ul>
+      </section>
+
+      <section id="analyze">
+        <div class="section-top"><span class="number">04</span><h2>기준 폴더로 분석하기</h2></div>
+        <ol>
+          <li>첫 화면에서 <strong>기준 폴더 선택하기</strong>를 누릅니다.</li>
+          <li><strong>검사할 폴더</strong>에 <code>검사할 파일</code>을 선택합니다.</li>
+          <li><strong>정리된 기준 폴더</strong>에 <code>정리된 기준</code>을 선택하고 <strong>하위 폴더 가져오기</strong>를 누릅니다.</li>
+          <li>거래처A·거래처B의 검색어가 각각 폴더명인지 확인합니다. 검색 방법은 <strong>파일명에 포함</strong>, 그룹 기준은 <strong>대괄호 [ ]</strong>로 둡니다.</li>
+          <li><strong>파일 분석</strong>을 누릅니다.</li>
+        </ol>
+        <h3>분석 직후 기대 결과</h3>
+        <div class="table-wrap"><table><thead><tr><th scope="col">구분</th><th scope="col">예상</th><th scope="col">이유</th></tr></thead><tbody>
+          <tr><td>이동 폴더 지정</td><td>1개</td><td>거래처A 견적 파일이 기존 폴더 하나와 일치합니다.</td></tr>
+          <tr><td>새 폴더 제안</td><td>2개</td><td>두 파일의 대괄호 안 값이 신규C로 같습니다.</td></tr>
+          <tr><td>기존 폴더 선택 필요</td><td>1개</td><td>회의 파일이 거래처A와 거래처B에 모두 맞습니다.</td></tr>
+          <tr><td>여러 그룹 선택 필요</td><td>1개</td><td>자료 파일에 중복D와 중복E가 모두 있습니다.</td></tr>
+          <tr><td>제안 없음</td><td>1개</td><td>일반메모에는 기존 폴더 검색어나 대괄호 그룹이 없습니다.</td></tr>
+        </tbody></table></div>
+        <ul class="checks">
+          <li><label><input type="checkbox"><span>전체 6개와 위 구분별 개수가 맞는다.</span></label></li>
+          <li><label><input type="checkbox"><span>지정된 이동 폴더에 거래처A와 파일 1개가 표시된다.</span></label></li>
+          <li><label><input type="checkbox"><span>새 폴더 제안에 <strong>신규C</strong>, 파일 2개와 기준 폴더 아래 경로가 표시된다.</span></label></li>
+          <li><label><input type="checkbox"><span>분석만 한 상태에서 원본 6개가 그대로 있고, 기준 폴더에 신규C 폴더가 아직 없다.</span></label></li>
+        </ul>
+        <p class="muted">개수가 다르면 파일 이름, 검색어와 대괄호 기준을 먼저 확인하세요. 실제 결과가 다르면 기록하고 다음 실행은 잠시 멈춰 주세요.</p>
+      </section>
+
+      <section id="review">
+        <div class="section-top"><span class="number">05</span><h2>제안과 이동 계획 확인하기</h2></div>
+        <ol>
+          <li><strong>새 폴더 제안</strong>에서 신규C를 선택합니다. 아래 파일 목록에서 초안과 최종 두 파일을 확인합니다.</li>
+          <li><strong>새 폴더 이름</strong>이 신규C인지 확인하고 <strong>선택한 제안 적용</strong>을 누릅니다. 확인 창에서도 폴더와 파일 수를 확인합니다.</li>
+          <li><strong>파일 확인과 개별 지정</strong> 필터에서 <strong>기존 폴더 선택 필요</strong>를 고릅니다. 회의 파일을 선택하고 <strong>기존 폴더 사용 → 거래처B → 선택 파일에 적용</strong>을 누릅니다.</li>
+          <li><strong>여러 그룹 선택 필요</strong>와 <strong>제안 없는 파일</strong> 필터를 각각 확인합니다. 두 파일은 이번 테스트에서 지정하지 않습니다.</li>
+          <li><strong>이동 계획 검토</strong>를 누릅니다. 아직 실행하지 말고 파일과 목적지를 확인합니다.</li>
+        </ol>
+        <ul class="checks">
+          <li><label><input type="checkbox"><span>신규C 제안에서 파일 2개가 보이고 제안 적용 후 이동 폴더에 신규C와 2개가 표시된다.</span></label></li>
+          <li><label><input type="checkbox"><span>회의 파일의 후보가 거래처A와 거래처B이며, 거래처B를 지정한 뒤 이동 폴더에 반영된다.</span></label></li>
+          <li><label><input type="checkbox"><span>여러 그룹 파일과 일반메모는 자동으로 폴더가 정해지지 않는다.</span></label></li>
+          <li><label><input type="checkbox"><span>이동 계획에 파일 4개가 보인다: 거래처A 1개, 거래처B 1개, 신규C 2개.<small>여러 그룹 파일과 일반메모 2개는 계획에서 제외되어야 합니다.</small></span></label></li>
+          <li><label><input type="checkbox"><span><strong>← 분석 결과</strong>로 돌아가도 지정 내용이 유지된다. 다시 이동 계획 검토를 열 수 있다.</span></label></li>
+          <li><label><input type="checkbox"><span>계획 검토만 한 상태에서는 원본 6개가 남아 있고 신규C 폴더가 없다.</span></label></li>
+        </ul>
+        <div class="notice"><strong>계획이 다르면 실행하지 마세요.</strong> 표시된 파일명·이동할 폴더·개수와 화면을 기록해 주세요.</div>
+      </section>
+
+      <section id="move">
+        <div class="section-top"><span class="number">06</span><h2>실제 이동 결과 확인하기</h2></div>
+        <p>앞 단계가 모두 예상과 같고 테스트용 파일이 맞을 때만 진행합니다. 이동 계획에서 선택된 파일 4개와 목적지를 다시 확인한 뒤 <strong>선택 4개 실행</strong>을 누릅니다.</p>
+        <ul class="checks">
+          <li><label><input type="checkbox"><span>기준 폴더의 거래처A에 견적 파일 1개가 있다.</span></label></li>
+          <li><label><input type="checkbox"><span>기준 폴더의 거래처B에 회의 파일 1개가 있다.</span></label></li>
+          <li><label><input type="checkbox"><span>기준 폴더에 신규C가 만들어지고 초안·최종 파일 2개가 들어 있다.</span></label></li>
+          <li><label><input type="checkbox"><span>검사 폴더에는 지정하지 않은 <code>[중복D][중복E] 자료.txt</code>와 <code>일반메모.txt</code>가 남아 있다.</span></label></li>
+          <li><label><input type="checkbox"><span>실행 결과와 실제 파일 위치가 일치한다. <strong>기록 보기</strong>에서 처리 결과도 확인한다.</span></label></li>
+        </ul>
+        <p class="muted">완료 문구만으로 이동 성공을 판단하지 말고, 탐색기에서 원본과 대상 위치를 함께 확인하세요.</p>
+      </section>
+
+      <section id="extra">
+        <div class="section-top"><span class="number">07</span><h2>여유가 있으면 추가 확인</h2></div>
+        <p>다음은 별도 테스트입니다. 이미 이동한 파일로 결과를 다시 분석하면 앞의 개수는 달라집니다. 새 테스트 폴더를 만들어 확인하세요.</p>
+        <ul class="checks">
+          <li><label><input type="checkbox"><span>설정과 결과에서 마우스 휠과 스크롤 막대로 위아래 끝까지 이동할 수 있다.<small>표 위에서 휠을 끝까지 내린 뒤 바깥 화면도 이어서 움직이는지 확인합니다.</small></span></label></li>
+          <li><label><input type="checkbox"><span>작은 창, Windows 화면 배율 100%와 150%, 라이트·다크 테마에서 글자와 버튼이 잘리지 않는다.</span></label></li>
+          <li><label><input type="checkbox"><span>Tab과 Enter/Space로 폴더 선택, 제안 적용, 이동 계획 검토에 접근할 수 있다.</span></label></li>
+          <li><label><input type="checkbox"><span>새 제안을 보류하면 파일이 계획에서 제외되고, 보류한 파일 필터에서 다시 볼 수 있다.</span></label></li>
+          <li><label><input type="checkbox"><span>설정을 바꾼 뒤 이전 결과가 표시되더라도 새 이동 계획 검토가 막히며, 다시 분석할 수 있다.</span></label></li>
+          <li><label><input type="checkbox"><span>테스트 파일이 100개를 넘을 때 페이지를 넘겨 확인하고, 제안 적용이 모든 페이지에 적용된다.</span></label></li>
+        </ul>
+      </section>
+
+      <section id="report">
+        <div class="section-top"><span class="number">08</span><h2>결과 남기기</h2></div>
+        <p>문제가 생기면 어느 단계에서 무엇을 했는지와 실제 화면을 함께 남겨 주세요. 오류 창이 있다면 문구를 그대로 적으면 원인을 확인하는 데 도움이 됩니다.</p>
+        <label for="notes"><strong>테스트 메모</strong></label>
+        <textarea id="notes" placeholder="PC / Windows 버전:
+문제가 생긴 단계:
+한 동작:
+예상한 결과:
+실제 결과와 오류 문구:"></textarea>
+        <p class="muted">체크와 메모는 이 브라우저에서만 저장됩니다. 파일을 다른 PC로 옮겨도 체크 상태는 함께 옮겨지지 않습니다. 인쇄하거나 PDF로 저장하면 결과를 전달하기 편합니다.</p>
+        <p id="storage-warning" class="notice" role="status" hidden>이 브라우저에서 저장소를 사용할 수 없어 체크와 메모가 새로고침 후 유지되지 않습니다.</p>
+        <noscript><p class="notice">브라우저에서 스크립트가 꺼져 있어 체크와 메모는 저장되지 않습니다. 인쇄 기능은 브라우저 메뉴에서 사용할 수 있습니다.</p></noscript>
+        <div class="actions"><button type="button" id="print">인쇄 / PDF 저장</button><button type="button" id="reset">체크와 메모 초기화</button></div>
+      </section>
+      <footer>이 문서는 차곡 0.10.6 테스트용입니다. 실제 앱의 동작을 대신 실행하지 않습니다.</footer>
+    </main>
+  </div>
+</div>
+<script>
+(() => {
+  const key = 'chagok-0106-test-guide-v1';
+  const boxes = Array.from(document.querySelectorAll('.checks input'));
+  const notes = document.getElementById('notes');
+  try {
+    const saved = JSON.parse(localStorage.getItem(key) || '{}');
+    if (Array.isArray(saved.checks)) boxes.forEach((box, i) => { box.checked = saved.checks[i] === true; });
+    if (typeof saved.notes === 'string') notes.value = saved.notes;
+  } catch (_) { /* 브라우저 저장소를 사용할 수 없어도 점검표는 동작한다. */ }
+  function save() {
+    try { localStorage.setItem(key, JSON.stringify({ checks: boxes.map(box => box.checked), notes: notes.value })); }
+    catch (_) { document.getElementById('storage-warning').hidden = false; }
+  }
+  boxes.forEach(box => box.addEventListener('change', save));
+  notes.addEventListener('input', save);
+  document.getElementById('print').addEventListener('click', () => window.print());
+  document.getElementById('reset').addEventListener('click', () => {
+    if (!window.confirm('이 브라우저에 저장된 체크와 메모를 지울까요?')) return;
+    boxes.forEach(box => { box.checked = false; }); notes.value = ''; save();
+  });
+})();
+</script>
+</body>
+</html>
