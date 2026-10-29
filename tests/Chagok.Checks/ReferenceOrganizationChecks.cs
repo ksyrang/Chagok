@@ -83,6 +83,25 @@ static class ReferenceOrganizationChecks
             Throws<ArgumentException>(() => ReferenceOrganization.NewDestination(f.Root, "bad."));
             Throws<ArgumentException>(() => scan.Assign(1, f.Source));
         });
+        add("ReferenceOrganization 폴더 제안은 중복 그룹과 보류 파일을 제외하고 페이지 전체에 적용", () =>
+        {
+            using var f = new ReferenceFixture();
+            for (var i = 0; i < 105; i++) f.Write($"[C] {i:000}.pdf");
+            f.Write("[C][D] overlap.pdf"); f.Write("[D] single.pdf"); f.Write("plain.pdf"); f.Write("거래처A.pdf");
+            using var scan = f.Scan();
+            Check(scan.ProposedFileCount == 106 && scan.ProposalCount == 2);
+            Check(scan.Count(ReferenceFilter.GroupOverlap) == 1 && scan.Count(ReferenceFilter.NoGroup) == 1);
+            Check(scan.ProposalFileCount("[C]") == 105 && scan.Files(ReferenceFilter.Unmatched, 1, "[C]", true).Count == 5);
+            scan.AssignProposal("[C]", ReferenceOrganization.NewDestination(f.Root, "C"));
+            Check(scan.ProposedFileCount == 1 && scan.Count(ReferenceFilter.GroupOverlap) == 1);
+            Check(scan.DestinationCount == 2 && scan.Destinations(0).Sum(x => x.Count) == 106);
+            var proposedPath = ReferenceOrganization.NewDestination(f.Root, "C");
+            Check(scan.DestinationFileCount(proposedPath) == 105 && scan.DestinationFiles(proposedPath, 1).Count == 5);
+            scan.HoldProposal("[D]");
+            Check(scan.ProposedFileCount == 0 && scan.Count(ReferenceFilter.Held) == 1);
+            using var plan = scan.CreatePlan(f.Cache); Check(plan.Count == 106);
+            Check(!Directory.Exists(Path.Combine(f.Root, "C")));
+        });
         add("ReferenceOrganization 페이지·필터·전체 그룹 지정은 100건 초과에도 보존", () =>
         {
             using var f = new ReferenceFixture(); for (var i = 0; i < 205; i++) f.Write($"[C] {i:000}.pdf");

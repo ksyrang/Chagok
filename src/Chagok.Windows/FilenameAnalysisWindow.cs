@@ -24,22 +24,35 @@ public partial class MainWindow
         if (busy || modal || SelectedFolder is null) return;
         InvalidatePlan(); ShowView(RulesView); PumpPending();
     }
-    private async void StartReference(object sender, RoutedEventArgs e) => await OpenReferenceOrganization();
-    private async Task OpenReferenceOrganization()
+    private void StartReference(object sender, RoutedEventArgs e)
     {
         if (busy || modal || exiting) return;
-        var folder = SelectedFolder ?? new FolderSpec { Name = "이번 검사" };
-        modal = true;
-        DiskPlanStore? plan = null;
         try
         {
+            var folder = SelectedFolder ?? new FolderSpec { Name = "이번 검사" };
             var excluded = settings.Folders.SelectMany(f => f.Rules).Select(DestinationPaths.Resolve).Concat(storage.ProtectedDirectories).ToArray();
-            var dialog = new ReferenceOrganizationWindow(this, folder, excluded, Path.Combine(storage.DirectoryPath, "scan-cache"), storage.DirectoryPath);
-            if (dialog.ShowDialog() != true) return;
-            plan = dialog.Plan;
-            if (plan is null) return;
-            ClearFilenameAnalysis(); InvalidatePlan(); currentPlan = plan; plan = null; planExecutable = true; referencePlan = true;
-            PreviewBackButton.Content = "← 정리 방식 선택";
+            ReferenceView.Content = new ReferenceOrganizationWindow(this, folder, excluded, Path.Combine(storage.DirectoryPath, "scan-cache"), storage.DirectoryPath);
+            awaitingReview = true; ShowView(ReferenceView);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        { ShowError("기준 폴더 정리를 준비하지 못했습니다.", ex); }
+    }
+    internal void ReferenceWorkState(bool value) => SetBusy(value);
+    internal void RegisterReferenceCancellation(CancellationTokenSource source) => workCancellation?.Token.Register(source.Cancel);
+    internal void CloseReference()
+    {
+        if (busy) return;
+        (ReferenceView.Content as ReferenceOrganizationWindow)?.Release(); ReferenceView.Content = null;
+        InvalidatePlan(); ShowView(StartView); PumpPending();
+    }
+    internal async Task ReferencePlanReady(ReferenceOrganizationWindow view)
+    {
+        var plan = view.TakePlan();
+        if (plan is null || exiting || exitAfterWork) { plan?.Dispose(); return; }
+        try
+        {
+            ClearFilenameAnalysis(); InvalidatePlan(); currentPlan = plan; plan = null; planExecutable = true;
+            PreviewBackButton.Content = "← 분석 결과";
             SetBusy(true, "이동 계획을 불러오고 있습니다…");
             await LoadPageAsync(0);
             PreviewSubtitle.Text = $"{currentPlan.Header.FolderName} · 기준 폴더 정리 · 대상 {currentPlan.Count:N0}개";
@@ -49,8 +62,8 @@ public partial class MainWindow
             SetStatus("이동 계획을 확인한 후 ‘선택 항목 실행’을 누르세요. 영구 규칙은 저장하지 않았습니다.");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
-        { InvalidatePlan(); ShowError("기준 폴더 정리를 준비하지 못했습니다.", ex); }
-        finally { plan?.Dispose(); modal = false; if (busy) SetBusy(false); PumpPending(); }
+        { InvalidatePlan(); awaitingReview = true; ShowError("기준 폴더 정리를 준비하지 못했습니다.", ex); }
+        finally { plan?.Dispose(); if (busy) SetBusy(false); PumpPending(); }
     }
     private void OpenFilenameAnalysis(object sender, RoutedEventArgs e)
     {

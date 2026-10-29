@@ -26,7 +26,7 @@ public partial class MainWindow : Window
     private DiskPlanStore? currentPlan;
     private const int PreviewPageSize = 100;
     private long previewPage;
-    private bool planExecutable, referencePlan;
+    private bool planExecutable;
     private CancellationTokenSource? workCancellation;
     private bool busy, modal, pumping, awaitingReview, exiting, exitAfterWork, monitoringPaused;
     private bool trayNoticeShown, closeRequested;
@@ -499,6 +499,7 @@ public partial class MainWindow : Window
                 InvalidatePlan(keepFeedback: true);
                 error ??= "결과 목록을 갱신하지 못했습니다. 실행 기록을 확인하세요. " + ex.Message;
             }
+            (ReferenceView.Content as ReferenceOrganizationWindow)?.RequireReanalysis();
             report.Finish(token.IsCancellationRequested, error);
             ShowExecutionFinished(report);
             SetStatus(report.Title + " · " + report.CountsText);
@@ -531,9 +532,13 @@ public partial class MainWindow : Window
         finally { SetBusy(false); PumpPending(); }
     }
     private void BackToRules(object sender, RoutedEventArgs e)
-    { if (busy) return; var start = referencePlan; InvalidatePlan(); ShowView(start ? StartView : RulesView); PumpPending(); }
+    { if (busy) return; var reference = ReferenceView.Content is not null; InvalidatePlan(); awaitingReview = reference; ShowView(reference ? ReferenceView : RulesView); PumpPending(); }
     private void ShowView(UIElement view)
     {
+        ReferenceView.Visibility = ReferenceEquals(view, ReferenceView) ? Visibility.Visible : Visibility.Collapsed;
+        var referenceActive = ReferenceView.Content is not null;
+        FolderList.IsEnabled = AddFolderButton.IsEnabled = AnalyzeAllButton.IsEnabled = HistoryNavButton.IsEnabled = !referenceActive && !busy;
+        SettingsButton.IsEnabled = !referenceActive && !busy && !exitAfterWork;
         StartView.Visibility = ReferenceEquals(view, StartView) ? Visibility.Visible : Visibility.Collapsed;
         RulesView.Visibility = ReferenceEquals(view, RulesView) ? Visibility.Visible : Visibility.Collapsed;
         PreviewView.Visibility = ReferenceEquals(view, PreviewView) ? Visibility.Visible : Visibility.Collapsed;
@@ -543,7 +548,7 @@ public partial class MainWindow : Window
     private void InvalidatePlan(bool keepFeedback = false)
     {
         var previous = currentPlan;
-        currentPlan = null; planExecutable = false; referencePlan = false; awaitingReview = false; previewPage = 0;
+        currentPlan = null; planExecutable = false; awaitingReview = false; previewPage = 0;
         previewRows.Clear(); previous?.Dispose();
         if (!keepFeedback) ResetExecutionFeedback();
         if (ExecuteButton is not null) UpdateSelection();
@@ -555,6 +560,7 @@ public partial class MainWindow : Window
         try
         {
             InvalidatePlan();
+            awaitingReview = ReferenceView.Content is not null;
             HistoryGrid.ItemsSource = storage.ReadHistory().Select(r => new HistoryRow(r)).ToArray();
             ShowView(HistoryView);
         }
@@ -640,14 +646,15 @@ public partial class MainWindow : Window
         busy = value;
         if (value) workCancellation = new CancellationTokenSource();
         else { workCancellation?.Dispose(); workCancellation = null; }
-        AddFolderButton.IsEnabled = !value; FolderList.IsEnabled = !value;
+        var referenceActive = ReferenceView.Content is not null;
+        AddFolderButton.IsEnabled = !value && !referenceActive; FolderList.IsEnabled = !value && !referenceActive;
         StartView.IsEnabled = !value;
-        AnalyzeAllButton.IsEnabled = !value; AnalysisView.WorkState(value);
+        AnalyzeAllButton.IsEnabled = !value && !referenceActive; AnalysisView.WorkState(value);
         RuleList.IsEnabled = !value; PendingBanner.IsEnabled = !value; ThemeButton.IsEnabled = !value && !exitAfterWork;
         if (value) ThemePopup.IsOpen = false;
-        SettingsButton.IsEnabled = !value && !exitAfterWork;
+        SettingsButton.IsEnabled = !value && !exitAfterWork && !referenceActive;
         PreviewGrid.IsEnabled = !value;
-        PreviewBackButton.IsEnabled = HistoryNavButton.IsEnabled = ResultHistoryButton.IsEnabled = !value;
+        PreviewBackButton.IsEnabled = ResultHistoryButton.IsEnabled = !value; HistoryNavButton.IsEnabled = !value && !referenceActive;
         CancelButton.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
         RefreshRules(); UpdateSelection();
         if (message is not null) SetStatus(message);
@@ -719,6 +726,7 @@ public partial class MainWindow : Window
             if (executing) RunTitle.Text = "종료 요청 · 안전하게 중단하고 있습니다";
             return;
         }
+        (ReferenceView.Content as ReferenceOrganizationWindow)?.Release(); ReferenceView.Content = null;
         exiting = true; pending.Clear(); shellDestinations.Clear(); monitor.Dispose();
         tray.Visible = false; Close(); System.Windows.Application.Current.Shutdown();
     }

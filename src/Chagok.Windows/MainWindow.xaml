@@ -58,6 +58,7 @@
    <Grid Grid.Column="1" Margin="28,24"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
     <Border x:Name="PendingBanner" Visibility="Collapsed" Background="{DynamicResource SoftBrush}" CornerRadius="5" Padding="12" Margin="0,0,0,16"><DockPanel><StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><Button Content="목록 확인" Click="OpenPending" Margin="8,0"/><Button Content="무시" Click="DismissPending"/></StackPanel><TextBlock x:Name="PendingText" VerticalAlignment="Center" TextWrapping="Wrap"/></DockPanel></Border>
     <Grid Grid.Row="1">
+     <ContentControl x:Name="ReferenceView" Visibility="Collapsed"/>
      <ScrollViewer x:Name="StartView" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
       <StackPanel>
        <TextBlock Text="어떤 방식으로 정리할까요?" Foreground="{DynamicResource TextBrush}" FontSize="25" FontWeight="SemiBold"/>

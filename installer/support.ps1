@@ -3,7 +3,7 @@
 param(
     [Parameter(Mandatory = $true)][ValidateSet('Prepare', 'Configure', 'Uninstall')][string]$Mode,
     [Parameter(Mandatory = $true)][string]$InstallDirectory,
-    [string]$Version = '0.10.2',
+    [string]$Version = '0.10.6',
     [switch]$RegisterPath,
     [switch]$DesktopShortcut,
     [switch]$RemoveData

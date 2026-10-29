@@ -5,7 +5,7 @@ using Microsoft.Data.Sqlite;
 namespace Chagok.Core;
 
 public enum ReferenceMatch { Contains, Group }
-public enum ReferenceFilter { All, Decided, Ambiguous, Unmatched }
+public enum ReferenceFilter { All, Decided, Ambiguous, Unmatched, NoGroup, GroupOverlap, Held, CandidateChoice }
 public sealed record ReferenceTarget(string Path, string Keywords, ReferenceMatch Match = ReferenceMatch.Contains);
 public sealed record ReferenceCandidate(string Destination, string Reason);
 public sealed record ReferenceFile(long Id, string Path, string Destination, string Reason, int Candidates)
@@ -14,6 +14,7 @@ public sealed record ReferenceFile(long Id, string Path, string Destination, str
     public string Status => Destination.Length > 0 ? "목적지 결정" : Candidates > 1 ? "선택 필요" : "목적지 없음";
 }
 public sealed record ReferenceGroup(string Key, long Count);
+public sealed record ReferenceDestination(string Path, long Count);
 
 // 결과·후보·그룹·선택을 디스크에 보관한다. UI와 작업 스레드는 번갈아 접근한다.
 public sealed class ReferenceOrganization : IDisposable
@@ -203,15 +204,21 @@ public sealed class ReferenceOrganization : IDisposable
     {
         ReferenceFilter.All => "1=1", ReferenceFilter.Decided => "destination<>''",
         ReferenceFilter.Ambiguous => "destination='' AND candidates>1", ReferenceFilter.Unmatched => "destination='' AND candidates<=1",
+        ReferenceFilter.NoGroup => "destination='' AND candidates=0 AND reason<>'사용자 보류' AND NOT EXISTS (SELECT 1 FROM groups WHERE groups.file=files.id)",
+        ReferenceFilter.GroupOverlap => "destination='' AND candidates=0 AND reason<>'사용자 보류' AND (SELECT count(*) FROM groups WHERE groups.file=files.id)>1",
+        ReferenceFilter.Held => "destination='' AND reason='사용자 보류'",
+        ReferenceFilter.CandidateChoice => "destination='' AND candidates>1 AND reason<>'사용자 보류'",
         _ => throw new ArgumentException("결과 필터를 확인하세요.")
     };
     public long Count(ReferenceFilter filter = ReferenceFilter.All) => Number("SELECT count(*) FROM files WHERE " + Where(filter));
-    public IReadOnlyList<ReferenceFile> Files(ReferenceFilter filter, long page, string? group = null) => Sql(() =>
+    public IReadOnlyList<ReferenceFile> Files(ReferenceFilter filter, long page, string? group = null, bool proposalOnly = false) => Sql(() =>
     {
         ArgumentOutOfRangeException.ThrowIfNegative(page);
         var rows = new List<ReferenceFile>(100);
         using var c = Command("SELECT id,path,destination,reason,candidates FROM files WHERE " + Where(filter)
-            + (group is null ? "" : " AND id IN (SELECT file FROM groups WHERE key=$g)") + " ORDER BY id LIMIT 100 OFFSET $o", ("$g", group ?? ""), ("$o", page * 100));
+            + (group is null ? "" : " AND id IN (SELECT file FROM groups WHERE key=$g)")
+            + (proposalOnly ? " AND reason<>'사용자 보류' AND (SELECT count(*) FROM groups WHERE groups.file=files.id)=1" : "")
+            + " ORDER BY id LIMIT 100 OFFSET $o", ("$g", group ?? ""), ("$o", page * 100));
         using var r = c.ExecuteReader(); while (r.Read()) rows.Add(new(r.GetInt64(0), r.GetString(1), r.GetString(2), r.GetString(3), r.GetInt32(4))); return rows;
     });
     public long GroupFileCount(string group) => Number("SELECT count(*) FROM groups JOIN files ON files.id=groups.file WHERE key=$g AND destination=''", ("$g", group));
@@ -222,6 +229,43 @@ public sealed class ReferenceOrganization : IDisposable
         using var c = Command("SELECT key,count(*) FROM groups JOIN files ON files.id=groups.file WHERE destination='' GROUP BY key ORDER BY count(*) DESC,key LIMIT 100 OFFSET $o", ("$o", page * 100));
         using var r = c.ExecuteReader(); while (r.Read()) rows.Add(new(r.GetString(0), r.GetInt64(1))); return rows;
     });
+    private const string ProposalCondition = "files.destination='' AND files.candidates=0 AND files.reason<>'사용자 보류' AND (SELECT count(*) FROM groups AS membership WHERE membership.file=files.id)=1";
+    public long ProposedFileCount => Number("SELECT count(*) FROM files WHERE " + ProposalCondition);
+    public long ProposalCount => Number("SELECT count(DISTINCT groups.key) FROM groups JOIN files ON files.id=groups.file WHERE " + ProposalCondition);
+    public long ProposalFileCount(string key) => Number("SELECT count(*) FROM groups JOIN files ON files.id=groups.file WHERE " + ProposalCondition + " AND groups.key=$g", ("$g", key));
+    public IReadOnlyList<ReferenceGroup> Proposals(long page) => Sql(() =>
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(page);
+        var rows = new List<ReferenceGroup>(100);
+        using var c = Command("SELECT groups.key,count(*) FROM groups JOIN files ON files.id=groups.file WHERE " + ProposalCondition + " GROUP BY groups.key ORDER BY count(*) DESC,groups.key LIMIT 100 OFFSET $o", ("$o", page * 100));
+        using var r = c.ExecuteReader(); while (r.Read()) rows.Add(new(r.GetString(0), r.GetInt64(1))); return rows;
+    });
+    public long DestinationCount => Number("SELECT count(DISTINCT destination COLLATE PATH) FROM files WHERE destination<>''");
+    public IReadOnlyList<ReferenceDestination> Destinations(long page) => Sql(() =>
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(page);
+        var rows = new List<ReferenceDestination>(100);
+        using var c = Command("SELECT destination,count(*) FROM files WHERE destination<>'' GROUP BY destination COLLATE PATH ORDER BY destination COLLATE PATH LIMIT 100 OFFSET $o", ("$o", page * 100));
+        using var r = c.ExecuteReader(); while (r.Read()) rows.Add(new(r.GetString(0), r.GetInt64(1))); return rows;
+    });
+    public long DestinationFileCount(string destination) => Number("SELECT count(*) FROM files WHERE destination=$d COLLATE PATH", ("$d", destination));
+    public IReadOnlyList<ReferenceFile> DestinationFiles(string destination, long page) => Sql(() =>
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(page);
+        var rows = new List<ReferenceFile>(100);
+        using var c = Command("SELECT id,path,destination,reason,candidates FROM files WHERE destination=$d COLLATE PATH ORDER BY id LIMIT 100 OFFSET $o", ("$d", destination), ("$o", page * 100));
+        using var r = c.ExecuteReader(); while (r.Read()) rows.Add(new(r.GetInt64(0), r.GetString(1), r.GetString(2), r.GetString(3), r.GetInt32(4))); return rows;
+    });
+    public void AssignProposal(string key, string destination)
+    {
+        destination = ValidateDestination(destination);
+        Execute("UPDATE files SET destination=$d,reason=$r WHERE " + ProposalCondition + " AND id IN (SELECT file FROM groups WHERE key=$g)",
+            ("$d", destination), ("$r", "사용자 그룹 분류: " + key), ("$g", key));
+    }
+    public void HoldProposal(string key)
+    {
+        Execute("UPDATE files SET reason='사용자 보류' WHERE " + ProposalCondition + " AND id IN (SELECT file FROM groups WHERE key=$g)", ("$g", key));
+    }
     public IReadOnlyList<ReferenceCandidate> Candidates(long file) => Sql(() =>
     {
         var rows = new List<ReferenceCandidate>(); using var c = Command("SELECT destination,reason FROM candidates WHERE file=$f ORDER BY destination", ("$f", file));

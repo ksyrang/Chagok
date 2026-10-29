@@ -10,7 +10,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>Chagok</AssemblyName>
     <RootNamespace>Chagok.Windows</RootNamespace>
-    <Version>0.10.2</Version>
+    <Version>0.10.6</Version>
     <Product>차곡</Product>
     <Title>차곡</Title>
     <Authors>ksyrang</Authors>
